@@ -1,0 +1,46 @@
+{
+  "name": "grunt-awsebtdeploy",
+  "description": "A grunt plugin to deploy applications to AWS Elastic Beanstalk",
+  "version": "0.1.0",
+  "homepage": "https://github.com/simoneb/grunt-awsebtdeploy",
+  "author": {
+    "name": "Simone Busoli",
+    "email": "simone.busoli@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/simoneb/grunt-awsebtdeploy.git"
+  },
+  "bugs": {
+    "url": "https://github.com/simoneb/grunt-awsebtdeploy/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/simoneb/grunt-awsebtdeploy/blob/master/LICENSE-MIT"
+    }
+  ],
+  "engines": {
+    "node": ">= 0.8.0"
+  },
+  "scripts": {
+    "test": "grunt test"
+  },
+  "devDependencies": {
+    "grunt-contrib-jshint": "^0.9.2",
+    "grunt-contrib-clean": "^0.5.0",
+    "grunt-contrib-nodeunit": "^0.3.3",
+    "grunt": "~0.4.4",
+    "aws-sdk": "~2.0.0-rc13"
+  },
+  "peerDependencies": {
+    "grunt": "~0.4.4"
+  },
+  "keywords": [
+    "gruntplugin",
+    "aws",
+    "elastic",
+    "beanstalk",
+    "deploy"
+  ]
+}
