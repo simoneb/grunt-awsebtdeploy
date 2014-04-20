@@ -8,8 +8,8 @@
 
 'use strict';
 
-module.exports = function(grunt) {
-  var exec = require('child_process');
+module.exports = function (grunt) {
+  var exec = require('child_process').exec;
 
   // Project configuration.
   grunt.initConfig({
@@ -33,9 +33,10 @@ module.exports = function(grunt) {
     awsebtdeploy: {
       demo: {
         options: {
-          region: 'EU',
-          applicationName: 'grunt-awsebtdeploy-demo',
-          environmentName: 'grunt-awsebtdeploy-demo-env'
+          region: 'eu-west-1',
+          applicationName: 'awsebtdeploy-demo',
+          environmentName: 'awsebtdeploy-demo-env',
+          wait: true
         }
       }
     },
@@ -57,13 +58,34 @@ module.exports = function(grunt) {
 
   // Whenever the "test" task is run, first clean the "tmp" dir, then run this
   // plugin's task(s), then test the result.
-  grunt.registerTask('test', ['clean', 'createSourceBundle', 'awsebtdeploy', 'nodeunit']);
+  grunt.registerTask('test', ['clean', 'createS3Key', 'createSourceBundle', 'awsebtdeploy']);
 
   // By default, lint and run all tests.
   grunt.registerTask('default', ['jshint', 'test']);
 
-  grunt.registerTask('createSourceBundle', function() {
-    exec()
-  })
+  grunt.registerTask('createS3Key', function () {
+    var done = this.async();
+
+    exec('git describe --always', function (err, stdo, stde) {
+      if (err) return done(err);
+
+      grunt.config('s3key', stdo.toString().trim());
+      done();
+    });
+  });
+
+  grunt.registerTask('createSourceBundle', function () {
+    var done = this.async(),
+        sourceBundle = 'tmp/' + grunt.config('s3key') + '.zip';
+
+    grunt.file.mkdir('tmp');
+    exec('git archive HEAD --format zip -o ' + sourceBundle,
+        function (err) {
+          if (err) return done(err);
+
+          grunt.config('awsebtdeploy.demo.options.sourceBundle', sourceBundle);
+          done();
+        });
+  });
 
 };
