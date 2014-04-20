@@ -2,6 +2,11 @@
 
 > A grunt plugin to deploy applications to AWS Elastic Beanstalk
 
+This plugin automates uploading of a _sourceBundle_ to S3 and update an Elastic Beanstalk
+environment with the new version of your application.
+It **does not** handle creating environments, applications or S3 buckets, so they have
+to exist in advance.
+
 ## Getting Started
 This plugin requires Grunt `~0.4.4`
 
@@ -37,53 +42,85 @@ grunt.initConfig({
 
 ### Options
 
-#### options.separator
+#### options.applicationName
+Required: true
 Type: `String`
-Default value: `',  '`
 
-A string value that is used to do something with whatever.
+The name of the Elastic Beanstalk application.
 
-#### options.punctuation
+#### options.environmentName
+Required: true
 Type: `String`
-Default value: `'.'`
 
-A string value that is used to do something else with whatever else.
+The name of the Elastic Beanstalk environment.
+
+#### options.region
+Required: true
+Type: `String`
+
+The name of the AWS region. It applies to both S3 buckets and Elastic Beanstalk.
+
+#### options.sourceBundle
+Required: true
+Type: `String`
+
+The path of a valid sourceBundle archive on the file system.
+This needs to be created in advance, for instance with `git archive`.
+
+#### options.versionLabel
+Required: false
+Type: `String`
+Default: `option.sourceBundle` file name without the extension
+
+The label of the application version as it appears in Elastic Beanstalk.
+
+#### options.accessKeyId
+Required: false
+Type: `String`
+Default: `process.env.process.env.AWS_ACCESS_KEY_ID`
+
+The AWS access key id. If not provided explicitly it is taken from the environment variable.
+
+#### options.secretAccessKey
+Required: false
+Type: `String`
+Default: `process.env.process.env.AWS_SECRET_ACCESS_KEY`
+
+The AWS secret access key. If not provided explicitly it is taken from the environment variable.
+
+#### options.wait
+Required: false
+Type: `Boolean`
+Default: `false`
+
+Specifies whether to wait to terminate until the environment successfully restarts after
+the update. It corresponds to checking that the new version of the application is deployed
+and that the environment is in state ready and health green.
+
+#### options.s3
+Required: false
+Type: `Object`
+Default: `{ bucket: options.applicationName, key: path.basename(options.sourceBundle) }`
+
+An object containing the configuration options for the S3 bucket where `options.sourceBundle`
+is uploaded. Is accepts all options (camelCase instead of PascalCase though)
+as the AWS S3 SDK `putObject` operation, as described [here](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property).
 
 ### Usage Examples
 
-#### Default Options
-In this example, the default options are used to do something with whatever. So if the `testing` file has the content `Testing` and the `123` file had the content `1 2 3`, the generated result would be `Testing, 1 2 3.`
-
 ```js
 grunt.initConfig({
   awsebtdeploy: {
-    options: {},
-    files: {
-      'dest/default_options': ['src/testing', 'src/123'],
-    },
-  },
+    demo: {
+      options: {
+        region: 'eu-west-1',
+        applicationName: 'awsebtdeploy-demo',
+        environmentName: 'awsebtdeploy-demo-env',
+        accessKeyId: "your access ID",
+        secretAccessKey: "your secret access key",
+        wait: true
+      }
+    }
+  }
 });
 ```
-
-#### Custom Options
-In this example, custom options are used to do something else with whatever else. So if the `testing` file has the content `Testing` and the `123` file had the content `1 2 3`, the generated result in this case would be `Testing: 1 2 3 !!!`
-
-```js
-grunt.initConfig({
-  awsebtdeploy: {
-    options: {
-      separator: ': ',
-      punctuation: ' !!!',
-    },
-    files: {
-      'dest/default_options': ['src/testing', 'src/123'],
-    },
-  },
-});
-```
-
-## Contributing
-In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
-
-## Release History
-_(Nothing yet)_
