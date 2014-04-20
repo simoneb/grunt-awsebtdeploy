@@ -9,7 +9,8 @@
 'use strict';
 
 module.exports = function (grunt) {
-  var exec = require('child_process').exec;
+  var exec = require('child_process').exec,
+      credentials = require('grunt-awsebtdeploy-credentials');
 
   // Project configuration.
   grunt.initConfig({
@@ -17,22 +18,24 @@ module.exports = function (grunt) {
       all: [
         'Gruntfile.js',
         'tasks/*.js',
-        '<%= nodeunit.tests %>',
+        '<%= nodeunit.tests %>'
       ],
       options: {
-        jshintrc: '.jshintrc',
-      },
+        jshintrc: '.jshintrc'
+      }
     },
 
     // Before generating any new files, remove any previously-created files.
     clean: {
-      tests: ['tmp'],
+      tests: ['tmp']
     },
 
     // Configuration to be run (and then tested).
     awsebtdeploy: {
       demo: {
         options: {
+          accessKeyId: credentials.accessKeyId,
+          secretAccessKey: credentials.secretAccessKey,
           region: 'eu-west-1',
           applicationName: 'awsebtdeploy-demo',
           environmentName: 'awsebtdeploy-demo-env',
@@ -43,8 +46,8 @@ module.exports = function (grunt) {
 
     // Unit tests.
     nodeunit: {
-      tests: ['test/*_test.js'],
-    },
+      tests: ['test/*_test.js']
+    }
 
   });
 
@@ -58,10 +61,10 @@ module.exports = function (grunt) {
 
   // Whenever the "test" task is run, first clean the "tmp" dir, then run this
   // plugin's task(s), then test the result.
-  grunt.registerTask('test', ['clean', 'createS3Key', 'createSourceBundle', 'awsebtdeploy']);
+  grunt.registerTask('deploy', ['clean', 'createS3Key', 'createSourceBundle', 'awsebtdeploy']);
 
   // By default, lint and run all tests.
-  grunt.registerTask('default', ['jshint', 'test']);
+  grunt.registerTask('default', ['jshint', 'deploy', 'nodeunit']);
 
   grunt.registerTask('createS3Key', function () {
     var done = this.async();

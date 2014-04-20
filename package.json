@@ -24,14 +24,17 @@
     "node": ">= 0.8.0"
   },
   "scripts": {
-    "test": "grunt test"
+    "test": "grunt"
+  },
+  "dependencies": {
+    "aws-sdk": "~2.0.0-rc13"
   },
   "devDependencies": {
     "grunt-contrib-jshint": "^0.9.2",
     "grunt-contrib-clean": "^0.5.0",
     "grunt-contrib-nodeunit": "^0.3.3",
     "grunt": "~0.4.4",
-    "aws-sdk": "~2.0.0-rc13"
+    "grunt-awsebtdeploy-credentials": "git+ssh://git@bitbucket.org:simoneb/grunt-awsebtdeploy-credentials.git"
   },
   "peerDependencies": {
     "grunt": "~0.4.4"
