@@ -43,54 +43,58 @@ grunt.initConfig({
 ### Options
 
 #### options.applicationName
-Required: true
+Required
+
 Type: `String`
 
 The name of the Elastic Beanstalk application.
 
 #### options.environmentName
-Required: true
+Required
+
 Type: `String`
 
 The name of the Elastic Beanstalk environment.
 
 #### options.region
-Required: true
+Required
+
 Type: `String`
 
 The name of the AWS region. It applies to both S3 buckets and Elastic Beanstalk.
 
 #### options.sourceBundle
-Required: true
+Required
+
 Type: `String`
 
-The path of a valid sourceBundle archive on the file system.
-This needs to be created in advance, for instance with `git archive`.
+The path of a [valid](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.deployment.source.html) sourceBundle archive on the file system.
+This needs to be created in advance, for instance with `git archive --format zip`.
 
 #### options.versionLabel
-Required: false
 Type: `String`
+
 Default: `option.sourceBundle` file name without the extension
 
 The label of the application version as it appears in Elastic Beanstalk.
 
 #### options.accessKeyId
-Required: false
 Type: `String`
+
 Default: `process.env.process.env.AWS_ACCESS_KEY_ID`
 
 The AWS access key id. If not provided explicitly it is taken from the environment variable.
 
 #### options.secretAccessKey
-Required: false
 Type: `String`
+
 Default: `process.env.process.env.AWS_SECRET_ACCESS_KEY`
 
 The AWS secret access key. If not provided explicitly it is taken from the environment variable.
 
 #### options.wait
-Required: false
 Type: `Boolean`
+
 Default: `false`
 
 Specifies whether to wait to terminate until the environment successfully restarts after
@@ -98,8 +102,8 @@ the update. It corresponds to checking that the new version of the application i
 and that the environment is in state ready and health green.
 
 #### options.s3
-Required: false
 Type: `Object`
+
 Default: `{ bucket: options.applicationName, key: path.basename(options.sourceBundle) }`
 
 An object containing the configuration options for the S3 bucket where `options.sourceBundle`
@@ -118,6 +122,7 @@ grunt.initConfig({
         environmentName: 'awsebtdeploy-demo-env',
         accessKeyId: "your access ID",
         secretAccessKey: "your secret access key",
+        sourceBundle: "path/to/source/bundle.zip"
         wait: true
       }
     }
