@@ -66,6 +66,8 @@ module.exports = function (grunt) {
     s3 = new AWS.S3();
 
     function describeEnvironments(data) {
+      grunt.verbose.writeflags(data, 'Applications');
+
       if (!data.Applications.length)
         lfwarn('Application "' + options.applicationName + '" does not exist');
 
@@ -74,11 +76,14 @@ module.exports = function (grunt) {
 
       send(ebt.describeEnvironments({
         ApplicationName: options.applicationName,
-        EnvironmentNames: [options.environmentName]
-      }, putS3Object));
+        EnvironmentNames: [options.environmentName],
+        IncludeDeleted: false
+      }), putS3Object);
     }
 
     function putS3Object(data) {
+      grunt.verbose.writeflags(data, 'Environments');
+
       if (!data.Environments || !data.Environments.length)
         lfwarn('Environment "' + options.environmentName + '" does not exist');
 
@@ -133,7 +138,8 @@ module.exports = function (grunt) {
         send(ebt.describeEnvironments({
           ApplicationName: options.applicationName,
           EnvironmentNames: [options.environmentName],
-          VersionLabel: options.versionLabel
+          VersionLabel: options.versionLabel,
+          IncludeDeleted: false
         }), cb);
       }
 

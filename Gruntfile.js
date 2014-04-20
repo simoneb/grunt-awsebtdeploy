@@ -69,7 +69,7 @@ module.exports = function (grunt) {
   grunt.registerTask('createS3Key', function () {
     var done = this.async();
 
-    exec('git describe --always', function (err, stdo, stde) {
+    exec('git describe --always --dirty=-' + new Date().getTime(), function (err, stdo, stde) {
       if (err) return done(err);
 
       grunt.config('s3key', stdo.toString().trim());
