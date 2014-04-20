@@ -172,7 +172,7 @@ module.exports = function (grunt) {
       if (!options.wait) {
         done();
       } else {
-        grunt.log.writeln('Waiting for environment to come up...');
+        grunt.log.writeln('Waiting for environment to become ready...');
         setTimeout(fn, 5000);
       }
     }

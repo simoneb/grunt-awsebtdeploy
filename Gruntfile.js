@@ -82,7 +82,7 @@ module.exports = function (grunt) {
         sourceBundle = 'tmp/' + grunt.config('s3key') + '.zip';
 
     grunt.file.mkdir('tmp');
-    exec('git archive HEAD --format zip -o ' + sourceBundle, { cwd: 'app' },
+    exec('git archive HEAD --format zip -o ../' + sourceBundle, { cwd: 'app' },
         function (err) {
           if (err) return done(err);
 
