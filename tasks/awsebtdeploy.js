@@ -11,8 +11,7 @@
 module.exports = function (grunt) {
   var AWS = require('aws-sdk'),
       path = require('path'),
-      fs = require('fs'),
-      extend = require('util')._extend;
+      fs = require('fs');
 
   grunt.registerMultiTask('awsebtdeploy', 'A grunt plugin to deploy applications to AWS Elastic Beanstalk', function () {
     if (!this.data.options.applicationName) grunt.warn('Missing "applicationName"');
@@ -29,6 +28,7 @@ module.exports = function (grunt) {
           secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
           versionLabel: path.basename(this.data.options.sourceBundle,
               path.extname(this.data.options.sourceBundle)),
+          versionDescription: '',
           wait: false,
           s3: {
             bucket: this.data.options.applicationName,
@@ -110,7 +110,8 @@ module.exports = function (grunt) {
 
                 ebt.updateEnvironment({
                   EnvironmentName: options.environmentName,
-                  VersionLabel: options.versionLabel
+                  VersionLabel: options.versionLabel,
+                  Description: options.versionDescription
                 }, function (err, data) {
                   if (err) return done(err);
 

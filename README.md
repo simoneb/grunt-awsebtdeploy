@@ -2,7 +2,7 @@
 
 > A grunt plugin to deploy applications to AWS Elastic Beanstalk
 
-This plugin automates uploading of a _sourceBundle_ to S3 and update an Elastic Beanstalk
+This plugin automates uploading an application _sourceBundle_ to S3 and update an Elastic Beanstalk
 environment with the new version of your application.
 It **does not** handle creating environments, applications or S3 buckets, so they have
 to exist in advance.
@@ -42,73 +42,78 @@ grunt.initConfig({
 
 ### Options
 
-#### options.applicationName
-Required
+These are the supported options. A trailing __*__ indicates a mandatory option.
 
-Type: `String`
+##### `String` options.applicationName *
 
-The name of the Elastic Beanstalk application.
+The name of the Elastic Beanstalk application.  
+It must exist and be accessible with the provided authorization tokens, otherwise an error is raised.
 
-#### options.environmentName
-Required
+##### `String` options.environmentName *
 
-Type: `String`
+The name of the Elastic Beanstalk environment.  
+It must exist and be accessible with the provided authorization tokens, otherwise an error is raised.
 
-The name of the Elastic Beanstalk environment.
+##### `String` options.region *
 
-#### options.region
-Required
+The [AWS region](http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region), for example `us-east-1`.  
+This setting applies to all resources handled by the task, S3 and Elastic Beanstalk.
 
-Type: `String`
+##### `String` options.sourceBundle *
 
-The name of the AWS region. It applies to both S3 buckets and Elastic Beanstalk.
+The path to a valid [source bundle](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.deployment.source.html) 
+archive on the local file system.  
+The archive needs to be created in advance, for instance with `git archive --format zip`.
 
-#### options.sourceBundle
-Required
+##### `String` options.versionLabel 
 
-Type: `String`
+The label of the application version as it appears in Elastic Beanstalk.  
 
-The path of a [valid](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.deployment.source.html) sourceBundle archive on the file system.
-This needs to be created in advance, for instance with `git archive --format zip`.
+*Default*: `options.sourceBundle` file name without the extension
 
-#### options.versionLabel
-Type: `String`
+##### `String` options.versionDescription
 
-Default: `option.sourceBundle` file name without the extension
+The description of the application version as it appears in Elastic Beanstalk.
 
-The label of the application version as it appears in Elastic Beanstalk.
+*Default*: `""` - empty string
 
-#### options.accessKeyId
-Type: `String`
+##### `String` options.accessKeyId
 
-Default: `process.env.process.env.AWS_ACCESS_KEY_ID`
+The AWS access key id.  
+If not provided explicitly it is taken from the environment variable, but it needs to be set one way or another.
 
-The AWS access key id. If not provided explicitly it is taken from the environment variable.
+*Default*: `process.env.AWS_ACCESS_KEY_ID`
 
-#### options.secretAccessKey
-Type: `String`
+##### `String` options.secretAccessKey
 
-Default: `process.env.process.env.AWS_SECRET_ACCESS_KEY`
+*Default*: `process.env.AWS_SECRET_ACCESS_KEY`
 
-The AWS secret access key. If not provided explicitly it is taken from the environment variable.
+The AWS secret access key.  
+If not provided explicitly it is taken from the environment variable, but it needs to be set one way or another.
 
-#### options.wait
-Type: `Boolean`
-
-Default: `false`
+##### `Boolean` options.wait
 
 Specifies whether to wait to terminate until the environment successfully restarts after
 the update. It corresponds to checking that the new version of the application is deployed
 and that the environment is in state ready and health green.
 
-#### options.s3
-Type: `Object`
+*Default*: `false`
 
-Default: `{ bucket: options.applicationName, key: path.basename(options.sourceBundle) }`
+##### `Object` options.s3
 
 An object containing the configuration options for the S3 bucket where `options.sourceBundle`
-is uploaded. Is accepts all options (camelCase instead of PascalCase though)
-as the AWS S3 SDK `putObject` operation, as described [here](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property).
+is uploaded. Is accepts all options 
+as the AWS S3 SDK `putObject` operation, as described [here](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property), 
+but in _camelCase_ format instead of _PascalCase_.  
+All settings are optional except `bucket` and `key`, which have sensible defaults.
+
+*Default*: 
+
+```js
+{ 
+  bucket: options.applicationName, 
+  key: path.basename(options.sourceBundle) 
+}```
 
 ### Usage Examples
 
@@ -122,7 +127,7 @@ grunt.initConfig({
         environmentName: 'awsebtdeploy-demo-env',
         accessKeyId: "your access ID",
         secretAccessKey: "your secret access key",
-        sourceBundle: "path/to/source/bundle.zip"
+        sourceBundle: "path/to/source/bundle.zip",
         wait: true
       }
     }
