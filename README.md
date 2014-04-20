@@ -113,7 +113,8 @@ All settings are optional except `bucket` and `key`, which have sensible default
 { 
   bucket: options.applicationName, 
   key: path.basename(options.sourceBundle) 
-}```
+}
+```
 
 ### Usage Examples
 

@@ -65,11 +65,13 @@ module.exports = function (grunt) {
     ebt = new AWS.ElasticBeanstalk();
     s3 = new AWS.S3();
 
-    function describeEnvironments(data) {
+    function describeApplicationsCb(data) {
       grunt.verbose.writeflags(data, 'Applications');
 
-      if (!data.Applications.length)
-        lfwarn('Application "' + options.applicationName + '" does not exist');
+      if (!data.Applications.length) {
+        grunt.log.error();
+        grunt.warn('Application "' + options.applicationName + '" does not exist');
+      }
 
       grunt.log.ok();
       grunt.log.write('Checking that environment "' + options.environmentName + '" exists...');
@@ -78,14 +80,16 @@ module.exports = function (grunt) {
         ApplicationName: options.applicationName,
         EnvironmentNames: [options.environmentName],
         IncludeDeleted: false
-      }), putS3Object);
+      }), describeEnvironmentsCb);
     }
 
-    function putS3Object(data) {
+    function describeEnvironmentsCb(data) {
       grunt.verbose.writeflags(data, 'Environments');
 
-      if (!data.Environments || !data.Environments.length)
-        lfwarn('Environment "' + options.environmentName + '" does not exist');
+      if (!data.Environments || !data.Environments.length) {
+        grunt.log.error();
+        grunt.warn('Environment "' + options.environmentName + '" does not exist');
+      }
 
       grunt.log.ok();
 
@@ -102,13 +106,13 @@ module.exports = function (grunt) {
 
       s3Object.Body = new Buffer(fs.readFileSync(options.sourceBundle));
 
-      grunt.log.write('Uploading source bundle in "' + options.sourceBundle +
+      grunt.log.write('Uploading source bundle "' + options.sourceBundle +
           '" to S3 location "' + options.s3.bucket + '/' + options.s3.key + '"...');
 
-      send(s3.putObject(s3Object), createApplicationVersion);
+      send(s3.putObject(s3Object), putS3ObjectCb);
     }
 
-    function createApplicationVersion() {
+    function putS3ObjectCb() {
       grunt.log.ok();
       grunt.log.write('Creating application version "' + options.versionLabel + '"...');
 
@@ -119,10 +123,10 @@ module.exports = function (grunt) {
           S3Bucket: options.s3.bucket,
           S3Key: options.s3.key
         }
-      }), updateEnvironment);
+      }), createApplicationVersionCb);
     }
 
-    function updateEnvironment() {
+    function createApplicationVersionCb() {
       grunt.log.ok();
       grunt.log.write('Updating environment...');
 
@@ -130,10 +134,10 @@ module.exports = function (grunt) {
         EnvironmentName: options.environmentName,
         VersionLabel: options.versionLabel,
         Description: options.versionDescription
-      }), doWait);
+      }), updateEnvironmentCb);
     }
 
-    function doWait() {
+    function updateEnvironmentCb() {
       function fn() {
         send(ebt.describeEnvironments({
           ApplicationName: options.applicationName,
@@ -181,6 +185,6 @@ module.exports = function (grunt) {
 
     send(ebt.describeApplications({
       ApplicationNames: [options.applicationName]
-    }), describeEnvironments);
+    }), describeApplicationsCb);
   });
 };

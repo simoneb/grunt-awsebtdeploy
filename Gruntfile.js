@@ -10,7 +10,8 @@
 
 module.exports = function (grunt) {
   var exec = require('child_process').exec,
-      credentials = require('grunt-awsebtdeploy-credentials');
+      credentials = require('grunt-awsebtdeploy-credentials'),
+      fs = require('fs');
 
   // Project configuration.
   grunt.initConfig({
@@ -64,7 +65,13 @@ module.exports = function (grunt) {
   grunt.registerTask('deploy', ['clean', 'createS3Key', 'createSourceBundle', 'awsebtdeploy']);
 
   // By default, lint and run all tests.
-  grunt.registerTask('default', ['jshint', 'deploy', 'nodeunit']);
+  grunt.registerTask('default', ['jshint', 'bumpAppVersion', 'deploy', 'nodeunit']);
+
+  grunt.registerTask('bumpAppVersion', function () {
+    var packageContents = { version: '0.1.' + new Date().getTime() };
+
+    fs.writeFile('app/package.json', JSON.stringify(packageContents), this.async());
+  });
 
   grunt.registerTask('createS3Key', function () {
     var done = this.async();
@@ -82,13 +89,19 @@ module.exports = function (grunt) {
         sourceBundle = 'tmp/' + grunt.config('s3key') + '.zip';
 
     grunt.file.mkdir('tmp');
-    exec('git archive HEAD --format zip -o ../' + sourceBundle, { cwd: 'app' },
-        function (err) {
-          if (err) return done(err);
 
-          grunt.config('awsebtdeploy.demo.options.sourceBundle', sourceBundle);
-          done();
-        });
+    exec('git stash create', {cwd: 'app'}, function (err, stdo) {
+      if (err) return done(err);
+
+      var stashName = stdo.toString().trim();
+
+      exec('git archive ' + stashName + ' --format zip -o ../' + sourceBundle, { cwd: 'app' },
+          function (err) {
+            if (err) return done(err);
+
+            grunt.config('awsebtdeploy.demo.options.sourceBundle', sourceBundle);
+            done();
+          });
+    });
   });
-
 };
