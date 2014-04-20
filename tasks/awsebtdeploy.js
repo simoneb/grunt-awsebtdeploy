@@ -13,21 +13,25 @@ module.exports = function (grunt) {
       path = require('path'),
       fs = require('fs');
 
-  function lfwarn() {
-    grunt.log.writeln('');
-    grunt.warn.apply(grunt, Array.prototype.slice.call(arguments));
+  function findEnvironmentByCNAME(data, cname) {
+    if (!data || !data.Environments) return false;
+
+    return data.Environments.filter(function (e) {
+      return e.CNAME === cname;
+    })[0];
   }
 
   grunt.registerMultiTask('awsebtdeploy', 'A grunt plugin to deploy applications to AWS Elastic Beanstalk', function () {
     if (!this.data.options.applicationName) grunt.warn('Missing "applicationName"');
-    if (!this.data.options.environmentName) grunt.warn('Missing "environmentName"');
+    if (!this.data.options.environmentCNAME) grunt.warn('Missing "environmentCNAME"');
     if (!this.data.options.region) grunt.warn('Missing "region"');
     if (!this.data.options.sourceBundle) grunt.warn('Missing "sourceBundle"');
 
     if (!grunt.file.isFile(this.data.options.sourceBundle))
       grunt.warn('"sourceBundle" points to a non-existent file');
 
-    var done = this.async(),
+    var task = this,
+        done = this.async(),
         options = this.options({
           accessKeyId: process.env.AWS_ACCESS_KEY_ID,
           secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -41,6 +45,15 @@ module.exports = function (grunt) {
           }
         }), s3, ebt;
 
+    function send(req, next) {
+      function wrap(action) {
+        return function (res) {
+          return action(res.data);
+        };
+      }
+      return req.on('success', wrap(next)).on('error', done).send();
+    }
+
     if (!options.accessKeyId) grunt.warn('Missing "accessKeyId"');
     if (!options.secretAccessKey) grunt.warn('Missing "secretAccessKey"');
 
@@ -50,15 +63,7 @@ module.exports = function (grunt) {
       region: options.region
     });
 
-    function send(req, next) {
-      function wrap(action) {
-        return function (res) {
-          return action(res.data);
-        };
-      }
 
-      return req.on('success', wrap(next)).on('error', done).send();
-    }
 
     grunt.log.subhead('Operating in region "' + options.region + '"');
 
@@ -74,11 +79,10 @@ module.exports = function (grunt) {
       }
 
       grunt.log.ok();
-      grunt.log.write('Checking that environment "' + options.environmentName + '" exists...');
+      grunt.log.write('Checking that environment with CNAME "' + options.environmentCNAME + '" exists...');
 
       send(ebt.describeEnvironments({
         ApplicationName: options.applicationName,
-        EnvironmentNames: [options.environmentName],
         IncludeDeleted: false
       }), describeEnvironmentsCb);
     }
@@ -86,9 +90,11 @@ module.exports = function (grunt) {
     function describeEnvironmentsCb(data) {
       grunt.verbose.writeflags(data, 'Environments');
 
-      if (!data.Environments || !data.Environments.length) {
+      var env = findEnvironmentByCNAME(data, options.environmentCNAME);
+
+      if (!env) {
         grunt.log.error();
-        grunt.warn('Environment "' + options.environmentName + '" does not exist');
+        grunt.warn('Environment with CNAME "' + options.environmentCNAME + '" does not exist');
       }
 
       grunt.log.ok();
@@ -109,10 +115,10 @@ module.exports = function (grunt) {
       grunt.log.write('Uploading source bundle "' + options.sourceBundle +
           '" to S3 location "' + options.s3.bucket + '/' + options.s3.key + '"...');
 
-      send(s3.putObject(s3Object), putS3ObjectCb);
+      send(s3.putObject(s3Object), putS3ObjectCb.bind(task, env));
     }
 
-    function putS3ObjectCb() {
+    function putS3ObjectCb(env) {
       grunt.log.ok();
       grunt.log.write('Creating application version "' + options.versionLabel + '"...');
 
@@ -123,25 +129,25 @@ module.exports = function (grunt) {
           S3Bucket: options.s3.bucket,
           S3Key: options.s3.key
         }
-      }), createApplicationVersionCb);
+      }), createApplicationVersionCb.bind(task, env));
     }
 
-    function createApplicationVersionCb() {
+    function createApplicationVersionCb(env) {
       grunt.log.ok();
       grunt.log.write('Updating environment...');
 
       send(ebt.updateEnvironment({
-        EnvironmentName: options.environmentName,
+        EnvironmentName: env.EnvironmentName,
         VersionLabel: options.versionLabel,
         Description: options.versionDescription
-      }), updateEnvironmentCb);
+      }), updateEnvironmentCb.bind(task, env));
     }
 
-    function updateEnvironmentCb() {
+    function updateEnvironmentCb(env) {
       function fn() {
         send(ebt.describeEnvironments({
           ApplicationName: options.applicationName,
-          EnvironmentNames: [options.environmentName],
+          EnvironmentNames: [env.EnvironmentName],
           VersionLabel: options.versionLabel,
           IncludeDeleted: false
         }), cb);
@@ -153,15 +159,15 @@ module.exports = function (grunt) {
           return setTimeout(fn, 5000);
         }
 
-        var env = data.Environments[0];
+        var currentEnv = data.Environments[0];
 
-        if (env.Status !== 'Ready') {
-          grunt.log.writeln('Environment is in state ' + env.Status + '...');
+        if (currentEnv.Status !== 'Ready') {
+          grunt.log.writeln('Environment is in state ' + currentEnv.Status + '...');
           return setTimeout(fn, 5000);
         }
 
-        if (env.Health !== 'Green') {
-          grunt.log.writeln('Environment health is ' + env.Health + '...');
+        if (currentEnv.Health !== 'Green') {
+          grunt.log.writeln('Environment health is ' + currentEnv.Health + '...');
           return setTimeout(fn, 5000);
         }
 

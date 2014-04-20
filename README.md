@@ -49,9 +49,10 @@ These are the supported options. A trailing __*__ indicates a mandatory option.
 The name of the Elastic Beanstalk application.  
 It must exist and be accessible with the provided authorization tokens, otherwise an error is raised.
 
-##### `String` options.environmentName *
+##### `String` options.environmentCNAME *
 
-The name of the Elastic Beanstalk environment.  
+The CNAME of the Elastic Beanstalk environment.
+This is the url normally used to access the application, for example `myapp.elasticbeanstalk.com`.
 It must exist and be accessible with the provided authorization tokens, otherwise an error is raised.
 
 ##### `String` options.region *
@@ -86,10 +87,10 @@ If not provided explicitly it is taken from the environment variable, but it nee
 
 ##### `String` options.secretAccessKey
 
-*Default*: `process.env.AWS_SECRET_ACCESS_KEY`
-
 The AWS secret access key.  
 If not provided explicitly it is taken from the environment variable, but it needs to be set one way or another.
+
+*Default*: `process.env.AWS_SECRET_ACCESS_KEY`
 
 ##### `Boolean` options.wait
 
@@ -125,7 +126,7 @@ grunt.initConfig({
       options: {
         region: 'eu-west-1',
         applicationName: 'awsebtdeploy-demo',
-        environmentName: 'awsebtdeploy-demo-env',
+        environmentCNAME: 'awsebtdeploy-demo.elasticbeanstalk.com',
         accessKeyId: "your access ID",
         secretAccessKey: "your secret access key",
         sourceBundle: "path/to/source/bundle.zip",

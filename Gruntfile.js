@@ -39,7 +39,7 @@ module.exports = function (grunt) {
           secretAccessKey: credentials.secretAccessKey,
           region: 'eu-west-1',
           applicationName: 'awsebtdeploy-demo',
-          environmentName: 'awsebtdeploy-demo-env',
+          environmentCNAME: 'awsebtdeploy-demo.elasticbeanstalk.com',
           wait: true
         }
       }
