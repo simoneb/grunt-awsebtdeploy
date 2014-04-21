@@ -37,14 +37,14 @@ module.exports = function (grunt) {
 
     // Configuration to be run (and then tested).
     awsebtdeploy: {
-      demo: {
+      inPlace: {
         options: {
           deployType: 'inPlace',
           accessKeyId: credentials.accessKeyId,
           secretAccessKey: credentials.secretAccessKey,
           region: 'eu-west-1',
-          applicationName: 'awsebtdeploy-demo',
-          environmentCNAME: 'awsebtdeploy-demo.elasticbeanstalk.com'
+          applicationName: 'awsebtdeploy-inplace',
+          environmentCNAME: 'awsebtdeploy-inplace.elasticbeanstalk.com'
         }
       }
     },
@@ -79,7 +79,7 @@ module.exports = function (grunt) {
     zip.addLocalFolder('app');
     zip.writeZip(sourceBundle);
 
-    grunt.config('awsebtdeploy.demo.options.sourceBundle', sourceBundle);
+    grunt.config('awsebtdeploy.inPlace.options.sourceBundle', sourceBundle);
   });
 
 };

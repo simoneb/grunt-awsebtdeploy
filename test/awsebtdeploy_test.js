@@ -30,7 +30,7 @@ exports.awsebtdeploy = {
   end_to_end: function(test) {
     test.expect(1);
 
-    get('http://awsebtdeploy-demo.elasticbeanstalk.com', function(res) {
+    get('http://awsebtdeploy-inplace.elasticbeanstalk.com', function(res) {
       var data = '';
       res.setEncoding('utf8');
 
