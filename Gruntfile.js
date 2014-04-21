@@ -37,12 +37,14 @@ module.exports = function (grunt) {
 
     // Configuration to be run (and then tested).
     awsebtdeploy: {
+      options: {
+        accessKeyId: credentials.accessKeyId,
+        secretAccessKey: credentials.secretAccessKey,
+        region: 'eu-west-1'
+      },
       inPlace: {
         options: {
           deployType: 'inPlace',
-          accessKeyId: credentials.accessKeyId,
-          secretAccessKey: credentials.secretAccessKey,
-          region: 'eu-west-1',
           applicationName: 'awsebtdeploy-inplace',
           environmentCNAME: 'awsebtdeploy-inplace.elasticbeanstalk.com'
         }

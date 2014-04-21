@@ -47,8 +47,6 @@ module.exports = function (grunt) {
     var task = this,
         done = this.async(),
         options = this.options({
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
           versionLabel: path.basename(this.data.options.sourceBundle,
               path.extname(this.data.options.sourceBundle)),
           versionDescription: '',
@@ -68,6 +66,10 @@ module.exports = function (grunt) {
 
       return req.on('success', wrap(next)).on('error', done).send();
     }
+
+    // overwriting properties which might have been passed but undefined
+    if(!options.accessKeyId) options.accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+    if(!options.secretAccessKey) options.secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
 
     if (!options.accessKeyId) grunt.warn('Missing "accessKeyId"');
     if (!options.secretAccessKey) grunt.warn('Missing "secretAccessKey"');
