@@ -174,7 +174,7 @@ If not provided explicitly it is taken from the environment variable, but it nee
 An object containing the configuration options for the S3 bucket where
 `options.sourceBundle` is uploaded.  
 It accepts all options as the [AWS S3 SDK
-`putObject`operation](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property),
+`putObject` operation](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property),
 just in _camelCase_ rather than _PascalCase_.
 
 All settings are optional except `bucket` and `key`, which have sensible defaults.
