@@ -34,6 +34,9 @@
     "grunt-contrib-clean": "^0.5.0",
     "grunt-contrib-nodeunit": "^0.3.3",
     "grunt": "~0.4.4",
+    "adm-zip": "~0.4.4"
+  },
+  "optionalDependencies": {
     "grunt-awsebtdeploy-credentials": "git+ssh://git@bitbucket.org:simoneb/grunt-awsebtdeploy-credentials.git"
   },
   "peerDependencies": {
