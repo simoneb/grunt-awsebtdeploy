@@ -29,7 +29,7 @@ module.exports = function (grunt) {
         timePart = time.substring(timeLength - availableSpace, timeLength);
 
     if (applicationName.length > maxLength - 3)
-      grunt.log.write('Warning: application name is too long to guarantee ' +
+      grunt.log.writeln('Warning: application name is too long to guarantee ' +
           'a unique environment name, whose maximum length cannot exceed ' + maxLength);
 
     return applicationName + timePart;

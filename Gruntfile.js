@@ -46,6 +46,16 @@ module.exports = function (grunt) {
           applicationName: 'awsebtdeploy-inplace',
           environmentCNAME: 'awsebtdeploy-inplace.elasticbeanstalk.com'
         }
+      },
+      swapToNew: {
+        options: {
+          accessKeyId: credentials.accessKeyId,
+          secretAccessKey: credentials.secretAccessKey,
+          region: 'eu-west-1',
+          deployType: 'swapToNew',
+          applicationName: 'awsebtdeploy-swaptonew',
+          environmentCNAME: 'awsebtdeploy-swaptonew.elasticbeanstalk.com'
+        }
       }
     },
 
@@ -80,6 +90,7 @@ module.exports = function (grunt) {
     zip.writeZip(sourceBundle);
 
     grunt.config('awsebtdeploy.inPlace.options.sourceBundle', sourceBundle);
+    grunt.config('awsebtdeploy.swapToNew.options.sourceBundle', sourceBundle);
   });
 
 };
