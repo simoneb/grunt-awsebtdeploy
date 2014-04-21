@@ -35,12 +35,12 @@ module.exports = function (grunt) {
     awsebtdeploy: {
       demo: {
         options: {
+          deployType: 'swapToNew',
           accessKeyId: credentials.accessKeyId,
           secretAccessKey: credentials.secretAccessKey,
           region: 'eu-west-1',
           applicationName: 'awsebtdeploy-demo',
-          environmentCNAME: 'awsebtdeploy-demo.elasticbeanstalk.com',
-          wait: true
+          environmentCNAME: 'awsebtdeploy-demo.elasticbeanstalk.com'
         }
       }
     },
@@ -90,12 +90,12 @@ module.exports = function (grunt) {
 
     grunt.file.mkdir('tmp');
 
-    exec('git stash create', {cwd: 'app'}, function (err, stdo) {
+    exec('git update-index --no-assume-unchanged package.json && git stash create', {cwd: 'app'}, function (err, stdo) {
       if (err) return done(err);
 
       var stashName = stdo.toString().trim();
 
-      exec('git archive ' + stashName + ' --format zip -o ../' + sourceBundle, { cwd: 'app' },
+      exec('git update-index --assume-unchanged package.json && git archive ' + stashName + ' --format zip -o ../' + sourceBundle, { cwd: 'app' },
           function (err) {
             if (err) return done(err);
 
