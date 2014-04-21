@@ -208,8 +208,10 @@ module.exports = function (grunt) {
     function swapEnvironmentCNAMEsCb(oldEnv, newEnv) {
       grunt.log.ok();
 
-      // here it is quite possible that DNS is still pointing to
-      // the old environment and that the application is not yet full up
+      // here the CNAMEs might not have completed swapping yet
+      // even if they have, the DNS records might still be pointing to
+      // the old environment and the application might not yet fully up
+      // if we didn't check it before
 
       done();
     }
