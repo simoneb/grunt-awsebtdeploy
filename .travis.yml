@@ -1,7 +1,7 @@
 language: node_js
 # Work around https://github.com/travis-ci/travis-ci/issues/1588
 # To avoid error when trying to npm install the private credentials repo module
-before_script: echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+before_install: echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 env:
   global:
   - secure: Q48SOjvRFiR9mEOoLPACpSJEicLI18F1lNBqdVjf41PlAiFW+6IrwA0pxvvq54WqPpn6ZVcY/eHbz2Y+FBJmiAnFMBPM6r3EnKgxMwdv3ErGjnDaNVMcrQLUFAKbBITgS8IYYicXDtQWNYNV50VbfuovsA2dW3OPAlvs2IGSVWk=
