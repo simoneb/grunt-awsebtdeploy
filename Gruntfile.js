@@ -30,12 +30,9 @@ module.exports = function (grunt) {
         jshintrc: '.jshintrc'
       }
     },
-
     clean: {
       tests: ['tmp']
     },
-
-    // Configuration to be run (and then tested).
     awsebtdeploy: {
       inPlace: {
         options: {
@@ -44,7 +41,8 @@ module.exports = function (grunt) {
           region: 'eu-west-1',
           deployType: 'inPlace',
           applicationName: 'awsebtdeploy-inplace',
-          environmentCNAME: 'awsebtdeploy-inplace.elasticbeanstalk.com'
+          environmentCNAME: 'awsebtdeploy-inplace.elasticbeanstalk.com',
+          healthPage: '/'
         }
       },
       swapToNew: {
@@ -54,15 +52,14 @@ module.exports = function (grunt) {
           region: 'eu-west-1',
           deployType: 'swapToNew',
           applicationName: 'awsebtdeploy-swaptonew',
-          environmentCNAME: 'awsebtdeploy-swaptonew.elasticbeanstalk.com'
+          environmentCNAME: 'awsebtdeploy-swaptonew.elasticbeanstalk.com',
+          healthPage: '/'
         }
       }
     },
-
     nodeunit: {
       tests: ['test/*_test.js']
     }
-
   });
 
   grunt.loadTasks('tasks');
@@ -81,8 +78,9 @@ module.exports = function (grunt) {
   });
 
   grunt.registerTask('createSourceBundle', function () {
-    var zip = new Zip(),
-        sourceBundle = 'tmp/' + require('./app/package.json').version + '.zip';
+    var version = require('./app/package.json').version,
+        zip = new Zip(),
+        sourceBundle = 'tmp/' + version + '.zip';
 
     grunt.file.mkdir('tmp');
 
@@ -90,7 +88,9 @@ module.exports = function (grunt) {
     zip.writeZip(sourceBundle);
 
     grunt.config('awsebtdeploy.inPlace.options.sourceBundle', sourceBundle);
+
     grunt.config('awsebtdeploy.swapToNew.options.sourceBundle', sourceBundle);
+    grunt.config('awsebtdeploy.swapToNew.options.healthPageContents', version);
   });
 
 };

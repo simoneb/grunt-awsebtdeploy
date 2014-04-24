@@ -11,7 +11,9 @@
 module.exports = function (grunt) {
   var AWS = require('aws-sdk'),
       path = require('path'),
-      fs = require('fs');
+      fs = require('fs'),
+      get = require('http').get,
+      util = require('util');
 
   function findEnvironmentByCNAME(data, cname) {
     if (!data || !data.Environments) return false;
@@ -29,8 +31,9 @@ module.exports = function (grunt) {
         timePart = time.substring(timeLength - availableSpace, timeLength);
 
     if (applicationName.length > maxLength - 3)
-      grunt.log.writeln('Warning: application name is too long to guarantee ' +
-          'a unique environment name, whose maximum length cannot exceed ' + maxLength);
+      grunt.log.subhead('Warning: application name is too long to guarantee ' +
+          'a unique environment name, maximum length ' +
+          maxLength + ' characters');
 
     return applicationName + timePart;
   }
@@ -43,6 +46,12 @@ module.exports = function (grunt) {
 
     if (!grunt.file.isFile(this.data.options.sourceBundle))
       grunt.warn('"sourceBundle" points to a non-existent file');
+
+    if (!this.data.options.healthPage) {
+      grunt.log.subhead('Warning: "healthPage" is not set, it is recommended to set one');
+    } else if(this.data.options.healthPage[0] !== '/') {
+      this.data.options.healthPage = '/' + this.data.options.healthPage;
+    }
 
     var task = this,
         done = this.async(),
@@ -68,8 +77,8 @@ module.exports = function (grunt) {
     }
 
     // overwriting properties which might have been passed but undefined
-    if(!options.accessKeyId) options.accessKeyId = process.env.AWS_ACCESS_KEY_ID;
-    if(!options.secretAccessKey) options.secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+    if (!options.accessKeyId) options.accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+    if (!options.secretAccessKey) options.secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
 
     if (!options.accessKeyId) grunt.warn('Missing "accessKeyId"');
     if (!options.secretAccessKey) grunt.warn('Missing "secretAccessKey"');
@@ -192,28 +201,22 @@ module.exports = function (grunt) {
     function createEnvironmentCb(oldEnv, newEnv) {
       grunt.log.ok();
 
-      waitForDeployment(newEnv, function () {
-        grunt.log.write('Swapping environment CNAMEs...');
+      waitForDeployment(newEnv, function (newNewEnv) {
+        waitForHealthPage(newNewEnv, function () {
+          grunt.log.write('Swapping environment CNAMEs...');
 
-        // here it is quite possible that the app is still not running
-        // we should probably allow to check that with a health URL
-
-        send(ebt.swapEnvironmentCNAMEs({
-          SourceEnvironmentName: oldEnv.EnvironmentName,
-          DestinationEnvironmentName: newEnv.EnvironmentName
-        }), swapEnvironmentCNAMEsCb.bind(task, oldEnv, newEnv));
+          send(ebt.swapEnvironmentCNAMEs({
+            SourceEnvironmentName: oldEnv.EnvironmentName,
+            DestinationEnvironmentName: newNewEnv.EnvironmentName
+          }), swapEnvironmentCNAMEsCb.bind(task, oldEnv, newNewEnv));
+        });
       }, 10000);
     }
 
     function swapEnvironmentCNAMEsCb(oldEnv, newEnv) {
       grunt.log.ok();
 
-      // here the CNAMEs might not have completed swapping yet
-      // even if they have, the DNS records might still be pointing to
-      // the old environment and the application might not yet fully up
-      // if we didn't check it before
-
-      done();
+      waitForHealthPage(oldEnv, done);
     }
 
     function inPlaceDeploy(env) {
@@ -226,7 +229,7 @@ module.exports = function (grunt) {
       }), updateEnvironmentCb.bind(task, env));
     }
 
-    function waitForDeployment(env, callback, delay) {
+    function waitForDeployment(env, done, delay) {
       delay = delay || 5000;
 
       grunt.log.writeln('Waiting for application to be deployed to environment...');
@@ -241,7 +244,6 @@ module.exports = function (grunt) {
       }
 
       function describeCb(data) {
-
         if (!data.Environments.length) {
           grunt.log.writeln(options.versionLabel + ' still not deployed to ' +
               env.EnvironmentName + ' ...');
@@ -265,15 +267,84 @@ module.exports = function (grunt) {
         grunt.log.writeln(options.versionLabel + ' has been deployed to ' +
             currentEnv.EnvironmentName + ' and environment is Ready and Green');
 
-        return callback();
+        return done(currentEnv);
       }
 
       setTimeout(fn, delay);
     }
 
+    function waitForHealthPage(env, done) {
+      if (!options.healthPage) {
+        return done();
+      }
+
+      function checkAgain() {
+        return setTimeout(reqHealthPage, 5000);
+      }
+
+      function reqHealthPage() {
+        grunt.log.write('Checking health page status of ' + env.CNAME + '...');
+
+        get({
+          hostname: env.CNAME,
+          path: options.healthPage
+        }, function (res) {
+          if (res.statusCode === 200) {
+            grunt.log.ok();
+            return readHealthPageContents(env, res, checkAgain, done);
+          }
+
+          grunt.log.writeln('Status ' + res.statusCode);
+          checkAgain();
+        });
+      }
+
+      reqHealthPage();
+    }
+
+    function readHealthPageContents(env, res, checkAgain, done) {
+      if (!options.healthPageContents) return done();
+
+      grunt.log.write('Checking health page contents of ' + env.CNAME +
+          ' against ' + options.healthPageContents + '...');
+
+      var body;
+
+      res.setEncoding('utf8');
+
+      res.on('data', function (chunk) {
+        if (!body) body = chunk;
+        else body += chunk;
+      });
+      res.on('end', function () {
+        return checkHealthPageContents(body, checkAgain, done);
+      });
+    }
+
+    function checkHealthPageContents(body, checkAgain, done) {
+      var ok;
+
+      if (util.isRegExp(options.healthPageContents)) {
+        ok = options.healthPageContents.test(body);
+      } else {
+        ok = options.healthPageContents === body;
+      }
+
+      if (ok) {
+        grunt.log.ok();
+        return done();
+      }
+
+      grunt.log.error('Got ' + body);
+      return checkAgain();
+    }
+
     function updateEnvironmentCb(env) {
       grunt.log.ok();
-      waitForDeployment(env, done);
+
+      waitForDeployment(env, function (newEnv) {
+        waitForHealthPage(newEnv, done);
+      });
     }
 
     grunt.log.write('Checking that application "' + options.applicationName + '" exists...');
