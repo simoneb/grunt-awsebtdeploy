@@ -1,4 +1,7 @@
-# grunt-awsebtdeploy [![Build Status](https://travis-ci.org/simoneb/grunt-awsebtdeploy.svg?branch=master)](https://travis-ci.org/simoneb/grunt-awsebtdeploy) [![NPM version](https://badge.fury.io/js/grunt-awsebtdeploy.svg)](http://badge.fury.io/js/grunt-awsebtdeploy)
+# grunt-awsebtdeploy 
+[![Build Status](https://travis-ci.org/simoneb/grunt-awsebtdeploy.svg?branch=master)](https://travis-ci.org/simoneb/grunt-awsebtdeploy) 
+[![NPM version](https://badge.fury.io/js/grunt-awsebtdeploy.svg)](http://badge.fury.io/js/grunt-awsebtdeploy)
+[![Dependency Status](https://david-dm.org/simoneb/grunt-awsebtdeploy.svg)](https://david-dm.org/simoneb/grunt-awsebtdeploy)
 
 > A grunt plugin to deploy applications to AWS Elastic Beanstalk
 
