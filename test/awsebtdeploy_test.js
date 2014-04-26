@@ -99,9 +99,14 @@ exports.awsebtdeploy = {
   swap_to_new: function (test) {
     test.expect(1);
 
-    get('http://awsebtdeploy-swaptonew.elasticbeanstalk.com', function (res) {
-      // terminate old environment first, even if test later fails
-      terminateEnvironment('awsebtdeploy-swaptonew', function () {
+    // terminate old environment first, even if test later fails
+    terminateEnvironment('awsebtdeploy-swaptonew', function () {
+      get({
+        hostname: 'awsebtdeploy-swaptonew.elasticbeanstalk.com',
+        headers: {
+          'cache-control': 'no-cache'
+        }
+      }, function (res) {
         checkResponse(test, res, test.done.bind(test));
       });
     });
