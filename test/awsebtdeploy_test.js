@@ -1,6 +1,8 @@
 'use strict';
 
 var get = require('http').get,
+    fs = require('fs'),
+    path = require('path'),
     AWS = require('aws-sdk'),
     credentials;
 
@@ -85,10 +87,6 @@ function terminateEnvironment(appName, callback) {
 }
 
 exports.awsebtdeploy = {
-  setUp: function (done) {
-    // setup here if necessary
-    done();
-  },
   in_place: function (test) {
     test.expect(1);
 
@@ -108,6 +106,25 @@ exports.awsebtdeploy = {
         }
       }, function (res) {
         checkResponse(test, res, test.done.bind(test));
+      });
+    });
+  },
+  logs: function(test) {
+    test.expect(4);
+    var p = path.join(__dirname, '../logs');
+
+    fs.readdir(p, function(err, dirs) {
+      test.ok(dirs[0], 'logs');
+      p = path.join(p, dirs[0]);
+
+      fs.readdir(p, function(err, files){
+        test.ok(files[0], 'log files');
+
+        fs.readFile(path.join(p, files[0]), function(err, buf) {
+          test.ok(buf);
+          test.notEqual(buf.length, 0, buf.length);
+          test.done();
+        });
       });
     });
   }

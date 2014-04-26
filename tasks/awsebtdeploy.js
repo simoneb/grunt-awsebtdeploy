@@ -13,8 +13,10 @@ module.exports = function (grunt) {
       path = require('path'),
       fs = require('fs'),
       get = require('http').get,
+      sget = require('https').get,
       util = require('util'),
       Q = require('q'),
+      mkdirp = require('mkdirp'),
       qAWS;
 
   function findEnvironmentByCNAME(data, cname) {
@@ -53,6 +55,97 @@ module.exports = function (grunt) {
     };
   }
 
+  function setupAWSOptions(options) {
+    // overwriting properties which might have been passed but undefined
+    if (!options.accessKeyId) options.accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+    if (!options.secretAccessKey) options.secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+
+    if (!options.accessKeyId) grunt.warn('Missing "accessKeyId"');
+    if (!options.secretAccessKey) grunt.warn('Missing "secretAccessKey"');
+
+    return {
+      accessKeyId: options.accessKeyId,
+      secretAccessKey: options.secretAccessKey,
+      region: options.region
+    };
+  }
+
+  grunt.registerMultiTask('awsebtlogs', 'Retrieve logs from AWS Elastic Beanstalk', function () {
+    if (!this.data.options.environmentName) grunt.warn('Missing "environmentName"');
+    if (!this.data.options.region) grunt.warn('Missing "region"');
+
+    var done = this.async(),
+        options = this.options({
+          outputPath: './'
+        }),
+        awsOptions = setupAWSOptions(options),
+        eb = new AWS.ElasticBeanstalk(awsOptions),
+        request = Q.nbind(eb.requestEnvironmentInfo, eb),
+        retrieve = Q.nbind(eb.retrieveEnvironmentInfo, eb),
+        args = { EnvironmentName: options.environmentName, InfoType: 'tail' };
+
+    grunt.log.writeln('Requesting logs for environment ' + options.environmentName + '...');
+
+    request(args)
+        .then(function (data) {
+          var requestId = data.ResponseMetadata.RequestId;
+
+          function doRetrieve() {
+            return Q.delay(2000)
+                .then(function () {
+                  return retrieve(args);
+                })
+                .then(function (data) {
+                  var deferred = Q.defer(),
+                      found = data.EnvironmentInfo.filter(function (info) {
+                        return info.BatchId === requestId;
+                      });
+
+                  if (!found || !found.length) {
+                    grunt.log.writeln('Still waiting for logs...');
+                    deferred.resolve(doRetrieve());
+                  } else {
+                    deferred.resolve(Q.all(found.map(function (info) {
+                      var outputPath = path.join(options.outputPath, info.BatchId),
+                          batchDeferred = Q.defer();
+
+                      sget(info.Message, function (res) {
+                        var data = [];
+                        res.on('data', function (chunk) {
+                          data.push(chunk);
+                        });
+                        res.on('end', function () {
+                          mkdirp.sync(outputPath);
+
+                          var fileName = path.join(outputPath, info.Name);
+                          grunt.log.writeln('Writing log file for EC2 instance ' +
+                              info.Ec2InstanceId + ' to ' + fileName);
+
+                          fs.writeFile(fileName, data, function (err) {
+                            if (err) return batchDeferred.reject(err);
+
+                            grunt.log.ok();
+                            batchDeferred.resolve();
+                          });
+                        });
+                        res.on('error', function (err) {
+                          batchDeferred.reject(err);
+                        });
+                      });
+
+                      return batchDeferred.promise;
+                    })));
+                  }
+
+                  return deferred.promise;
+                });
+          }
+
+          return Q.timeout(doRetrieve(), 30 * 1000);
+        })
+        .then(done, done);
+  });
+
   grunt.registerMultiTask('awsebtdeploy', 'A grunt plugin to deploy applications to AWS Elastic Beanstalk', function () {
     if (!this.data.options.applicationName) grunt.warn('Missing "applicationName"');
     if (!this.data.options.environmentCNAME) grunt.warn('Missing "environmentCNAME"');
@@ -79,22 +172,10 @@ module.exports = function (grunt) {
             bucket: this.data.options.applicationName,
             key: path.basename(this.data.options.sourceBundle)
           }
-        });
+        }),
+        awsOptions = setupAWSOptions(options);
 
-    // overwriting properties which might have been passed but undefined
-    if (!options.accessKeyId) options.accessKeyId = process.env.AWS_ACCESS_KEY_ID;
-    if (!options.secretAccessKey) options.secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-
-    if (!options.accessKeyId) grunt.warn('Missing "accessKeyId"');
-    if (!options.secretAccessKey) grunt.warn('Missing "secretAccessKey"');
-
-    AWS.config.update({
-      accessKeyId: options.accessKeyId,
-      secretAccessKey: options.secretAccessKey,
-      region: options.region
-    });
-
-    qAWS = wrapAWS(new AWS.ElasticBeanstalk(), new AWS.S3());
+    qAWS = wrapAWS(new AWS.ElasticBeanstalk(awsOptions), new AWS.S3(awsOptions));
 
     grunt.log.subhead('Operating in region "' + options.region + '"');
 

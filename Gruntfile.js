@@ -31,7 +31,7 @@ module.exports = function (grunt) {
       }
     },
     clean: {
-      tests: ['tmp']
+      all: ['tmp', 'logs']
     },
     awsebtdeploy: {
       inPlace: {
@@ -57,6 +57,17 @@ module.exports = function (grunt) {
         }
       }
     },
+    awsebtlogs: {
+      logs: {
+        options: {
+          accessKeyId: credentials.accessKeyId,
+          secretAccessKey: credentials.secretAccessKey,
+          region: 'eu-west-1',
+          environmentName: 'awsebtdeploy-inplace',
+          outputPath: 'logs'
+        }
+      }
+    },
     nodeunit: {
       tests: ['test/*_test.js']
     }
@@ -69,7 +80,9 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-contrib-nodeunit');
 
   grunt.registerTask('deploy', ['clean', 'bumpAppVersion', 'createSourceBundle', 'awsebtdeploy']);
-  grunt.registerTask('default', ['jshint', 'deploy', 'nodeunit']);
+  grunt.registerTask('default', ['jshint', 'deploy', 'logs', 'nodeunit']);
+
+  grunt.registerTask('logs', ['clean', 'awsebtlogs']);
 
   grunt.registerTask('bumpAppVersion', function () {
     var pkg = { version: '0.1.' + new Date().getTime() };

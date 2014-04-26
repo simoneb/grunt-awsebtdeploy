@@ -6,7 +6,9 @@
 > A grunt plugin to deploy applications to AWS Elastic Beanstalk
 
 This plugin automates uploading an application _sourceBundle_ to S3 and update an Elastic Beanstalk
-environment with the new version of the application. It uses the [AWS SDK for Node.js](aws.amazon.com/sdkfornodejs/) internally.
+environment with the new version of the application. It also comes with utility tasks to carry out common Elastic Beanstalk operations.
+
+It uses the official [AWS SDK for Node.js](aws.amazon.com/sdkfornodejs/) internally.
 
 ## Getting Started
 
@@ -258,3 +260,85 @@ grunt.config('awsebtdeploy.demo.options.sourceBundle', sourceBundle);
 ```
 
 This snippet of code could be run for example in a custom task before the `awsebtdeploy` task.
+
+## The **awsebtlogs** task
+
+### Overview
+This task automates requesting and then retrieving log files for all instances running within an environment.
+
+In your project's Gruntfile, add a section named `awsebtlogs` to the data object passed into `grunt.initConfig()`.
+
+```js
+grunt.initConfig({
+  awsebtlogs: {
+    options: {
+      // Task-specific options go here.
+    },
+    your_target: {
+      // Target-specific options go here.
+    },
+  },
+});
+```
+
+### Options
+
+These are the supported options. A trailing __*__ indicates a mandatory option.
+
+##### options.environmentName *
+
+* Type: `String` 
+
+The name of the Elastic Beanstalk environment.  
+It must exist and be accessible with the provided authorization tokens, otherwise an error is raised.
+
+##### options.outputPath *
+
+* Type: `String` 
+
+The path on the file system where log files are saved.
+If the path does not exist it is created with `mkdirp`.
+
+##### options.region *
+
+* Type: `String` 
+
+The [AWS region](http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region), for example `us-east-1`.  
+This setting applies to all resources handled by the task, S3 and Elastic Beanstalk.
+
+##### options.accessKeyId
+
+* Type: `String`
+* Default: `process.env.AWS_ACCESS_KEY_ID`
+
+The AWS access key id.  
+If not provided explicitly it is taken from the environment variable, but it needs to be set one way or another.
+
+##### options.secretAccessKey
+
+* Type: `String` 
+* Default: `process.env.AWS_SECRET_ACCESS_KEY`
+
+The AWS secret access key.  
+If not provided explicitly it is taken from the environment variable, but it needs to be set one way or another.
+
+
+## Usage Examples
+
+```js
+grunt.initConfig({
+  awsebtlogs: {
+    logs: {
+      options: {
+        // or via the AWS_ACCESS_KEY_ID environment variable
+        accessKeyId: "your access ID",
+        // or via the AWS_SECRET_ACCESS_KEY environment variable
+        secretAccessKey: "your secret access key"
+        region: 'eu-west-1',
+        environmentName: 'awsebtdeploy-demo',
+        outputPath: 'logs'
+      }
+    }
+  }
+});
+```
