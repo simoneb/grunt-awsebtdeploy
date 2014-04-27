@@ -5,16 +5,15 @@
 
 > A grunt plugin to deploy applications to AWS Elastic Beanstalk
 
-This plugin automates uploading an application _sourceBundle_ to S3 and update an Elastic Beanstalk
-environment with the new version of the application. It also comes with utility tasks to carry out common Elastic Beanstalk operations.
+This plugin contains a set of *Grunt* tasks to automate the deployment and management of applications running on the Amazon Web Services Elastic Beanstalk service.
 
-It uses the official [AWS SDK for Node.js](aws.amazon.com/sdkfornodejs/) internally.
+It relies on the the official [AWS SDK for Node.js](aws.amazon.com/sdkfornodejs/) to interact with AWS.
 
 ## Getting Started
 
-This plugin requires Grunt `~0.4.4`
+This plugin requires Grunt `~0.4.4`. If you haven't used [Grunt](http://gruntjs.com/) before, be sure to check out the [Getting Started](http://gruntjs.com/getting-started) guide.  
 
-If you haven't used [Grunt](http://gruntjs.com/) before, be sure to check out the [Getting Started](http://gruntjs.com/getting-started) guide, as it explains how to create a [Gruntfile](http://gruntjs.com/sample-gruntfile) as well as install and use Grunt plugins. Once you're familiar with that process, you may install this plugin with this command:
+You may install this plugin with this command:
 
 ```shell
 npm install grunt-awsebtdeploy --save-dev
@@ -26,72 +25,13 @@ Once the plugin has been installed, it may be enabled inside your Gruntfile with
 grunt.loadNpmTasks('grunt-awsebtdeploy');
 ```
 
-## Health check
+## Environment Tiers
 
-Besides using the official SDK to carry out deployments it is possible to check and wait until a request to a health page running in the target environment returns a success status code and optionally that its contents match a string or a regular expression.
-
-Configuring a health page, a path relative to the environment's _CNAME_, is optional but strongly recommended as it provides additional guarantees about the outcome of a deployment. The results of operations done via the AWS SDK only guarantee that the operation itself has succeded but cannot ensure that the application is functioning correctly or that the new version of the application is already running.
-
-This is especially useful when doing a `swapToNew` deployment, whereby a change in the DNS might take time to propagate.
-
-A health check can be configured using two options: `options.healthPage` and `options.healthPageContents` and its behavior differes depending on the deployment type, described next.
-
-## Deployment types
-
-Two deployment types are supported, which can be configured in the task options. 
-There is a common sequence of internal operations followed by all deployment types, which correspond to 
-[AWS SDK operations](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/frames.html).
-
-1. `describeApplications` to check that `options.applicationName` exists
-2. `describeEnvironments` to check that `options.environmentCNAME` exists
-3. `S3.putObject` to upload `options.sourceBundle` to S3
-4. `createApplicationVersion` to create a new application version from the S3 object
-5. _any deployment type-specific logic, described below_
-
-### inPlace
-
-The deploy is done to the currently running environment, therefore a downtime will happen while the
-environment refreshes after the update.
-
-The specific operations are:
-
-1. `updateEnvironment` to configure the environment to use the new application version
-2. `describeEnvironments` recursively to check that the existing environment is up and running
-3. if `options.healthPage` is set a HTTP GET request is issued to the corresponding URL until the response status
-code is 200 and, if `options.healthPageContents` is set, until the body of the response matches. This basically guarantees that in the first case the application is up, and in the second that the deployment is complete when the health page responds with a string matching `options.healthPageContents`, which might carry version information
-
-> This deployment type is safe for non-production environments where there is no need to guarantee uptime
-
-### swapToNew 
-
-A flavor of *blue/green* deployment where a new environment is created with the same settings as the current one, 
-the application is deployed to the new environment and finally the CNAMEs of the environments are swapped 
-so that the old environment url now points to the new one. 
-This method enables zero-downtime deployments and the procedure 
-is described in the [AWS documentation](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.CNAMESwap.html).
-
-> The old environment is not terminated automatically for safety reasons, to avoid leaving old environments running
-they should be terminated manually.  
-> Creating a new environment is a lengthy operation that may take up to several minutes
-
-The specific operations are:
-
-1. `createConfigurationTemplate` to create a template of the configuration of the current environment to be used for 
-the new environment. The template is given an autogenerated name
-2. `createEnvironment` to create a new environment based on the previous template, containing the new application version.
-The environment is given an autogenerated name
-3. `describeEnvironments` recursively to check that the new environment is up and running
-4. If `options.healthPage` is set a HTTP GET request is issued to the corresponding temporary URL **in the new environment** until the response status code is 200 and, if `options.healthPageContents` is set, until the body of the response matches. This guarantees that the new version of the application is running in the new environment before swapping the CNAME with the original environment
-5. `swapEnvironmentCNAMEs` to swap the urls of the old and new environments so that the new environment starts responding
-to requests made to the old environment url
-6. If `options.healthPage` is set a HTTP GET request is issued to the corresponding **original** URL until the response status code is 200 and, if `options.healthPageContents` is set, until the body of the response matches too.  
-  This step, in combination with `options.healthPageContents`, guarantees that if this options is set to a value which is unique to the new version of the application, like a VCS changeset, and if the health page returns that version-specific value, a deployment is considered complete when the changes due to the CNAME swap have fully propagated. In the other case the plugin would consider the deployment complete even though the old environment might be still serving requests at the original url for some time after the swap
-
-
-> This deployment type is more appropriate for production environments, but compared to `inPlace` it creates new resources and can potentially disrupt the functionality of the environment in case any step goes wrong, which would require manual intervention, for example to swap CNAMEs again to the old, untouched environment    
-
+This plugin was created with the idea of managing applications running in [Web Tiers](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features-managing-env-tiers.html). Which environment tiers a particular task supports is described in each task documentation section below.
 
 ## The **awsebtdeploy** task
+
+> Supported environment tiers: **Web**
 
 ### Overview
 In your project's Gruntfile, add a section named `awsebtdeploy` to the data object passed into `grunt.initConfig()`.
@@ -261,7 +201,74 @@ grunt.config('awsebtdeploy.demo.options.sourceBundle', sourceBundle);
 
 This snippet of code could be run for example in a custom task before the `awsebtdeploy` task.
 
+## Health check
+
+After a deployment is operationally complete it is possible to check and wait until a request to a health page running in the target environment returns a success status code and optionally that its contents match a string or a regular expression.
+
+Configuring a health page, a path relative to the environment's _CNAME_, is optional but strongly recommended as it provides additional guarantees about the outcome of a deployment. The results of operations done via the AWS SDK only guarantee that the operation itself has succeded but cannot ensure that the application is functioning correctly or that the new version of the application is already running.
+
+This is especially useful when doing a `swapToNew` deployment, whereby a change in the DNS might take time to propagate.
+
+A health check can be configured using two options: `options.healthPage` and `options.healthPageContents` and its behavior differes depending on the deployment type, described next.
+
+## Deployment types
+
+Two deployment types are supported, which can be configured in the task options. 
+There is a common sequence of internal operations followed by all deployment types, which correspond to 
+[AWS SDK operations](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/frames.html).
+
+1. `describeApplications` to check that `options.applicationName` exists
+2. `describeEnvironments` to check that `options.environmentCNAME` exists
+3. `S3.putObject` to upload `options.sourceBundle` to S3
+4. `createApplicationVersion` to create a new application version from the S3 object
+5. _any deployment type-specific logic, described below_
+
+### inPlace
+
+The deploy is done to the currently running environment, therefore a downtime will happen while the
+environment refreshes after the update.
+
+The specific operations are:
+
+1. `updateEnvironment` to configure the environment to use the new application version
+2. `describeEnvironments` recursively to check that the existing environment is up and running
+3. if `options.healthPage` is set a HTTP GET request is issued to the corresponding URL until the response status
+code is 200 and, if `options.healthPageContents` is set, until the body of the response matches. This basically guarantees that in the first case the application is up, and in the second that the deployment is complete when the health page responds with a string matching `options.healthPageContents`, which might carry version information
+
+> This deployment type is safe for non-production environments where there is no need to guarantee uptime
+
+### swapToNew 
+
+A flavor of *blue/green* deployment where a new environment is created with the same settings as the current one, 
+the application is deployed to the new environment and finally the CNAMEs of the environments are swapped 
+so that the old environment url now points to the new one. 
+This method enables zero-downtime deployments and the procedure 
+is described in the [AWS documentation](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.CNAMESwap.html).
+
+> The old environment is not terminated automatically for safety reasons, to avoid leaving old environments running
+they should be terminated manually.  
+> Creating a new environment is a lengthy operation that may take up to several minutes
+
+The specific operations are:
+
+1. `createConfigurationTemplate` to create a template of the configuration of the current environment to be used for 
+the new environment. The template is given an autogenerated name
+2. `createEnvironment` to create a new environment based on the previous template, containing the new application version.
+The environment is given an autogenerated name
+3. `describeEnvironments` recursively to check that the new environment is up and running
+4. If `options.healthPage` is set a HTTP GET request is issued to the corresponding temporary URL **in the new environment** until the response status code is 200 and, if `options.healthPageContents` is set, until the body of the response matches. This guarantees that the new version of the application is running in the new environment before swapping the CNAME with the original environment
+5. `swapEnvironmentCNAMEs` to swap the urls of the old and new environments so that the new environment starts responding
+to requests made to the old environment url
+6. If `options.healthPage` is set a HTTP GET request is issued to the corresponding **original** URL until the response status code is 200 and, if `options.healthPageContents` is set, until the body of the response matches too.  
+  This step, in combination with `options.healthPageContents`, guarantees that if this options is set to a value which is unique to the new version of the application, like a VCS changeset, and if the health page returns that version-specific value, a deployment is considered complete when the changes due to the CNAME swap have fully propagated. In the other case the plugin would consider the deployment complete even though the old environment might be still serving requests at the original url for some time after the swap
+
+
+> This deployment type is more appropriate for production environments, but compared to `inPlace` it creates new resources and can potentially disrupt the functionality of the environment in case any step goes wrong, which would require manual intervention, for example to swap CNAMEs again to the old, untouched environment    
+
+
 ## The **awsebtlogs** task
+
+> Supported environment tiers: **All**
 
 ### Overview
 This task automates requesting and then retrieving log files for all instances running within an environment.
