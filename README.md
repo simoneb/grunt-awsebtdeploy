@@ -273,6 +273,8 @@ to requests made to the old environment url
 ### Overview
 This task automates requesting and then retrieving log files for all instances running within an environment.
 
+Note that log retrieval is an asynchronous operation, triggered by an initial request and followed by a periodic check of the availability of the requested information.
+
 In your project's Gruntfile, add a section named `awsebtlogs` to the data object passed into `grunt.initConfig()`.
 
 ```js
@@ -329,6 +331,19 @@ If not provided explicitly it is taken from the environment variable, but it nee
 The AWS secret access key.  
 If not provided explicitly it is taken from the environment variable, but it needs to be set one way or another.
 
+##### options.timeoutSec
+
+* Type: `Number` 
+* Default: `30`
+
+Time number of seconds after which the log retrieval operation times out.
+
+##### options.intervalSec
+
+* Type: `Number` 
+* Default: `2`
+
+Time number of seconds between attempts to check log availability.
 
 ## Usage Examples
 
@@ -343,7 +358,9 @@ grunt.initConfig({
         secretAccessKey: "your secret access key"
         region: 'eu-west-1',
         environmentName: 'awsebtdeploy-demo',
-        outputPath: 'logs'
+        outputPath: 'logs',
+        timeoutSec: 20,
+        intervalSec: 5
       }
     }
   }

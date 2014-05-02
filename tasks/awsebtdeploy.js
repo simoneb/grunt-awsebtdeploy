@@ -56,7 +56,6 @@ module.exports = function (grunt) {
   }
 
   function setupAWSOptions(options) {
-    // overwriting properties which might have been passed but undefined
     if (!options.accessKeyId) options.accessKeyId = process.env.AWS_ACCESS_KEY_ID;
     if (!options.secretAccessKey) options.secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
 
@@ -76,7 +75,9 @@ module.exports = function (grunt) {
 
     var done = this.async(),
         options = this.options({
-          outputPath: './'
+          outputPath: './',
+          timeoutSec: 30,
+          intervalSec: 2
         }),
         awsOptions = setupAWSOptions(options),
         eb = new AWS.ElasticBeanstalk(awsOptions),
@@ -91,7 +92,7 @@ module.exports = function (grunt) {
           var requestId = data.ResponseMetadata.RequestId;
 
           function doRetrieve() {
-            return Q.delay(2000)
+            return Q.delay(options.intervalSec * 1000)
                 .then(function () {
                   return retrieve(args);
                 })
@@ -141,7 +142,7 @@ module.exports = function (grunt) {
                 });
           }
 
-          return Q.timeout(doRetrieve(), 30 * 1000);
+          return Q.timeout(doRetrieve(), options.timeoutSec * 1000);
         })
         .then(done, done);
   });
