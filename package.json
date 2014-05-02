@@ -1,7 +1,7 @@
 {
   "name": "grunt-awsebtdeploy",
   "description": "A grunt plugin to deploy applications to AWS Elastic Beanstalk",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "homepage": "https://github.com/simoneb/grunt-awsebtdeploy",
   "author": {
     "name": "Simone Busoli",

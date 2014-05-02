@@ -136,6 +136,37 @@ A string or a regular expression to match with the body of any response from the
 If `options.healthPage` is not set this option is ignored. Strings are matched with `===` whereas regular expressions 
 are matched with `RegExp.test`.
 
+##### options.deployTimeoutMin
+
+* Type: `Number` 
+* Default: `10`
+
+Time number of minutes after which a deploy operation times out.  
+A deployment is considered complete when the environment goes back to a Green and Ready state after a new version
+of an application has been deployed.
+
+##### options.deployIntervalSec
+
+* Type: `Number` 
+* Default: `20`
+
+Time number of seconds between attempts to check the outcome of a deployment.
+
+##### options.healthPageTimeoutMin
+
+* Type: `Number` 
+* Default: `5`
+
+Time number of minutes after which the check of a health page times out.  
+This option is meaningful only in case `options.healthPage` and optionally `options.healthPageContents` have been specified.
+
+##### options.healthPageIntervalSec
+
+* Type: `Number` 
+* Default: `10`
+
+Time number of seconds between attempts to check a health page status and optionally its contents.
+
 ##### options.s3
 
 * Type: `Object`
@@ -366,3 +397,8 @@ grunt.initConfig({
   }
 });
 ```
+
+## Release History
+
+ * 2014-05-02   v0.1.7   Add timeout and interval options to logs task, and deploy/health page deploy task
+ 
