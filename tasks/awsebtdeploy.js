@@ -172,7 +172,11 @@ module.exports = function (grunt) {
           s3: {
             bucket: this.data.options.applicationName,
             key: path.basename(this.data.options.sourceBundle)
-          }
+          },
+          deployTimeoutMin: 10,
+          deployIntervalSec: 20,
+          healthPageTimeoutMin: 5,
+          healthPageIntervalSec: 10
         }),
         awsOptions = setupAWSOptions(options);
 
@@ -227,7 +231,7 @@ module.exports = function (grunt) {
       return createConfigurationTemplate(env)
           .spread(createNewEnvironment)
           .spread(function (oldEnv, newEnv) {
-            return waitForDeployment(newEnv, 20000, 10 * 60 * 1000)
+            return waitForDeployment(newEnv)
                 .then(waitForHealthPage)
                 .then(swapEnvironmentCNAMEs.bind(task, oldEnv, newEnv))
                 .then(waitForHealthPage);
@@ -253,15 +257,12 @@ module.exports = function (grunt) {
           .then(waitForHealthPage);
     }
 
-    function waitForDeployment(env, delay, timeout) {
-      delay = delay || 5000;
-      timeout = timeout || 2 * 60 * 1000;
-
+    function waitForDeployment(env) {
       grunt.log.writeln('Waiting for environment to become ready (timing out in ' +
-          (timeout / 60000).toFixed() + ' minutes)...');
+          options.deployTimeoutMin + ' minutes)...');
 
       function checkDeploymentComplete() {
-        return Q.delay(delay)
+        return Q.delay(options.deployIntervalSec * 1000)
             .then(function () {
               return qAWS.describeEnvironments({
                 ApplicationName: options.applicationName,
@@ -298,13 +299,10 @@ module.exports = function (grunt) {
             });
       }
 
-      return Q.timeout(checkDeploymentComplete(), timeout);
+      return Q.timeout(checkDeploymentComplete(), options.deployTimeoutMin * 60 * 1000);
     }
 
-    function waitForHealthPage(env, delay, timeout) {
-      delay = delay || 5000;
-      timeout = timeout || 5 * 60 * 1000;
-
+    function waitForHealthPage(env) {
       if (!options.healthPage) {
         return;
       }
@@ -327,7 +325,9 @@ module.exports = function (grunt) {
                 deferred.resolve(res);
               } else {
                 grunt.log.writeln('Status ' + res.statusCode);
-                deferred.resolve(Q.delay(delay).then(checkHealthPage));
+                deferred.resolve(
+                    Q.delay(options.healthPageIntervalSec * 1000)
+                        .then(checkHealthPage));
               }
             });
 
@@ -363,7 +363,8 @@ module.exports = function (grunt) {
             deferred.resolve();
           } else {
             grunt.log.error('Got ' + body);
-            deferred.resolve(Q.delay(delay).then(checkHealthPage));
+            deferred.resolve(
+                Q.delay(options.healthPageIntervalSec * 1000).then(checkHealthPage));
           }
         });
 
@@ -376,9 +377,9 @@ module.exports = function (grunt) {
       }
 
       grunt.log.writeln('Checking health page of ' + env.CNAME +
-          ' (timing out in ' + (timeout / 60000).toFixed() + ' minutes)...');
+          ' (timing out in ' + options.healthPageTimeoutMin + ' minutes)...');
 
-      return Q.timeout(checkHealthPage(), timeout);
+      return Q.timeout(checkHealthPage(), options.healthPageTimeoutMin * 60 * 1000);
     }
 
     function invokeDeployType(env) {
