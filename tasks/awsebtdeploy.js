@@ -16,8 +16,7 @@ module.exports = function (grunt) {
       sget = require('https').get,
       util = require('util'),
       Q = require('q'),
-      mkdirp = require('mkdirp'),
-      qAWS;
+      mkdirp = require('mkdirp');
 
   function findEnvironmentByCNAME(data, cname) {
     if (!data || !data.Environments) return false;
@@ -148,39 +147,54 @@ module.exports = function (grunt) {
   });
 
   grunt.registerMultiTask('awsebtdeploy', 'A grunt plugin to deploy applications to AWS Elastic Beanstalk', function () {
-    if (!this.data.options.applicationName) grunt.warn('Missing "applicationName"');
-    if (!this.data.options.environmentCNAME) grunt.warn('Missing "environmentCNAME"');
-    if (!this.data.options.region) grunt.warn('Missing "region"');
-    if (!this.data.options.sourceBundle) grunt.warn('Missing "sourceBundle"');
 
-    if (!grunt.file.isFile(this.data.options.sourceBundle))
-      grunt.warn('"sourceBundle" points to a non-existent file');
+    function validateOptions() {
+      if (!options.applicationName) grunt.warn('Missing "applicationName"');
+      if (!options.environmentCNAME) grunt.warn('Missing "environmentCNAME"');
+      if (!options.region) grunt.warn('Missing "region"');
+      if (!options.sourceBundle) grunt.warn('Missing "sourceBundle"');
 
-    if (!this.data.options.healthPage) {
-      grunt.log.subhead('Warning: "healthPage" is not set, it is recommended to set one');
-    } else if (this.data.options.healthPage[0] !== '/') {
-      this.data.options.healthPage = '/' + this.data.options.healthPage;
+      if (!grunt.file.isFile(options.sourceBundle))
+        grunt.warn('"sourceBundle" points to a non-existent file');
+
+      if (!options.healthPage) {
+        grunt.log.subhead('Warning: "healthPage" is not set, it is recommended to set one');
+      } else if (options.healthPage[0] !== '/') {
+        options.healthPage = '/' + options.healthPage;
+      }
+
+      if (!options.versionLabel) {
+        options.versionLabel = path.basename(options.sourceBundle,
+            path.extname(options.sourceBundle));
+      }
+
+      if (!options.s3) {
+        options.s3 = {};
+      }
+
+      if (!options.s3.bucket) {
+        options.s3.bucket = options.applicationName;
+      }
+
+      if (!options.s3.key) {
+        options.s3.key = path.basename(options.sourceBundle);
+      }
     }
 
     var task = this,
         done = this.async(),
         options = this.options({
-          versionLabel: path.basename(this.data.options.sourceBundle,
-              path.extname(this.data.options.sourceBundle)),
           versionDescription: '',
           deployType: 'inPlace',
-          s3: {
-            bucket: this.data.options.applicationName,
-            key: path.basename(this.data.options.sourceBundle)
-          },
           deployTimeoutMin: 10,
           deployIntervalSec: 20,
           healthPageTimeoutMin: 5,
           healthPageIntervalSec: 10
         }),
-        awsOptions = setupAWSOptions(options);
+        awsOptions = setupAWSOptions(options),
+        qAWS = wrapAWS(new AWS.ElasticBeanstalk(awsOptions), new AWS.S3(awsOptions));
 
-    qAWS = wrapAWS(new AWS.ElasticBeanstalk(awsOptions), new AWS.S3(awsOptions));
+    validateOptions();
 
     grunt.log.subhead('Operating in region "' + options.region + '"');
 

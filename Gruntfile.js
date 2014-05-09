@@ -34,26 +34,24 @@ module.exports = function (grunt) {
       all: ['tmp', 'logs']
     },
     awsebtdeploy: {
+      options: {
+        accessKeyId: credentials.accessKeyId,
+        secretAccessKey: credentials.secretAccessKey,
+        region: 'eu-west-1',
+        healthPage: '/'
+      },
       inPlace: {
         options: {
-          accessKeyId: credentials.accessKeyId,
-          secretAccessKey: credentials.secretAccessKey,
-          region: 'eu-west-1',
           deployType: 'inPlace',
           applicationName: 'awsebtdeploy-inplace',
-          environmentCNAME: 'awsebtdeploy-inplace.elasticbeanstalk.com',
-          healthPage: '/'
+          environmentCNAME: 'awsebtdeploy-inplace.elasticbeanstalk.com'
         }
       },
       swapToNew: {
         options: {
-          accessKeyId: credentials.accessKeyId,
-          secretAccessKey: credentials.secretAccessKey,
-          region: 'eu-west-1',
           deployType: 'swapToNew',
           applicationName: 'awsebtdeploy-swaptonew',
-          environmentCNAME: 'awsebtdeploy-swaptonew.elasticbeanstalk.com',
-          healthPage: '/'
+          environmentCNAME: 'awsebtdeploy-swaptonew.elasticbeanstalk.com'
         }
       }
     },
