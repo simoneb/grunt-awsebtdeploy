@@ -413,6 +413,7 @@ module.exports = function (grunt) {
       return qAWS.createApplicationVersion({
         ApplicationName: options.applicationName,
         VersionLabel: options.versionLabel,
+        Description: options.versionDescription,
         SourceBundle: {
           S3Bucket: options.s3.bucket,
           S3Key: options.s3.key
