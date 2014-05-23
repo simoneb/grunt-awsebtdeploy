@@ -87,7 +87,7 @@ The archive needs to be created in advance of running the task, for instance wit
 
 * Type: `String` 
 * Default: `inPlace`  
-* Allowed values: `inPlace`, `swapToNew`
+* Allowed values: `inPlace`, `swapToNew`, `manual`
 
 The type of the deployment to run, more on this below.
 
@@ -243,7 +243,7 @@ A health check can be configured using two options: `options.healthPage` and `op
 
 ## Deployment types
 
-Two deployment types are supported, which can be configured in the task options. 
+Three deployment types are supported, which can be configured in the task options. 
 There is a common sequence of internal operations followed by all deployment types, which correspond to 
 [AWS SDK operations](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/frames.html).
 
@@ -253,7 +253,7 @@ There is a common sequence of internal operations followed by all deployment typ
 4. `createApplicationVersion` to create a new application version from the S3 object
 5. _any deployment type-specific logic, described below_
 
-### inPlace
+### `inPlace`
 
 The deploy is done to the currently running environment, therefore a downtime will happen while the
 environment refreshes after the update.
@@ -267,7 +267,7 @@ code is 200 and, if `options.healthPageContents` is set, until the body of the r
 
 > This deployment type is safe for non-production environments where there is no need to guarantee uptime
 
-### swapToNew 
+### `swapToNew`
 
 A flavor of *blue/green* deployment where a new environment is created with the same settings as the current one, 
 the application is deployed to the new environment and finally the CNAMEs of the environments are swapped 
@@ -294,6 +294,10 @@ to requests made to the old environment url
 
 
 > This deployment type is more appropriate for production environments, but compared to `inPlace` it creates new resources and can potentially disrupt the functionality of the environment in case any step goes wrong, which would require manual intervention, for example to swap CNAMEs again to the old, untouched environment    
+
+### `manual`
+
+Manual deployment. The source bundle will be uploaded to S3, and a new application version will be ready and waiting to be deployed.
 
 
 ## The **awsebtlogs** task
