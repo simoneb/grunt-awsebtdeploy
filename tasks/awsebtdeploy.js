@@ -402,6 +402,8 @@ module.exports = function (grunt) {
           return inPlaceDeploy(env);
         case 'swapToNew':
           return swapDeploy(env);
+        case 'manual':
+          return;
         default:
           grunt.warn('Deploy type "' + options.deployType + '" unrecognized');
       }
