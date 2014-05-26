@@ -402,7 +402,7 @@ grunt.initConfig({
 
 ## Release History
 
-* 2014-05-17	v0.1.9	Use options.versionDescription when creating an application version
-* 2014-05-09	v0.1.8	Target options correctly override task options. Update dependencies
-* 2014-05-02	v0.1.7	Add timeout and interval options to logs task, and deploy/health page deploy task
- 
+* 2014-05-27	    v0.1.10   	Add new "manual" deploy type
+* 2014-05-17	    v0.1.9	    Use options.versionDescription when creating an application version
+* 2014-05-09	    v0.1.8    	Target options correctly override task options. Update dependencies
+* 2014-05-02	    v0.1.7	    Add timeout and interval options to logs task, and deploy/health page deploy task
