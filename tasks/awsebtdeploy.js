@@ -9,13 +9,13 @@
 'use strict';
 
 module.exports = function (grunt) {
-  var AWS = require('aws-sdk'),
-      path = require('path'),
-      fs = require('fs'),
-      get = require('http').get,
-      sget = require('https').get,
-      util = require('util'),
-      Q = require('q'),
+  var AWS    = require('aws-sdk'),
+      path   = require('path'),
+      fs     = require('fs'),
+      get    = require('http').get,
+      sget   = require('https').get,
+      util   = require('util'),
+      Q      = require('q'),
       mkdirp = require('mkdirp');
 
   function findEnvironmentByCNAME(data, cname) {
@@ -27,11 +27,11 @@ module.exports = function (grunt) {
   }
 
   function createEnvironmentName(applicationName) {
-    var maxLength = 23,
-        time = new Date().getTime().toString(),
-        timeLength = time.length,
+    var maxLength      = 23,
+        time           = new Date().getTime().toString(),
+        timeLength     = time.length,
         availableSpace = maxLength - applicationName.length,
-        timePart = time.substring(timeLength - availableSpace, timeLength);
+        timePart       = time.substring(timeLength - availableSpace, timeLength);
 
     if (applicationName.length > maxLength - 3)
       grunt.log.subhead('Warning: application name is too long to guarantee ' +
@@ -79,10 +79,10 @@ module.exports = function (grunt) {
           intervalSec: 2
         }),
         awsOptions = setupAWSOptions(options),
-        eb = new AWS.ElasticBeanstalk(awsOptions),
-        request = Q.nbind(eb.requestEnvironmentInfo, eb),
-        retrieve = Q.nbind(eb.retrieveEnvironmentInfo, eb),
-        args = { EnvironmentName: options.environmentName, InfoType: 'tail' };
+        eb         = new AWS.ElasticBeanstalk(awsOptions),
+        request    = Q.nbind(eb.requestEnvironmentInfo, eb),
+        retrieve   = Q.nbind(eb.retrieveEnvironmentInfo, eb),
+        args       = { EnvironmentName: options.environmentName, InfoType: 'tail' };
 
     grunt.log.writeln('Requesting logs for environment ' + options.environmentName + '...');
 
@@ -181,8 +181,8 @@ module.exports = function (grunt) {
       }
     }
 
-    var task = this,
-        done = this.async(),
+    var task    = this,
+        done    = this.async(),
         options = this.options({
           versionDescription: '',
           deployType: 'inPlace',
@@ -192,7 +192,7 @@ module.exports = function (grunt) {
           healthPageIntervalSec: 10
         }),
         awsOptions = setupAWSOptions(options),
-        qAWS = wrapAWS(new AWS.ElasticBeanstalk(awsOptions), new AWS.S3(awsOptions));
+        qAWS       = wrapAWS(new AWS.ElasticBeanstalk(awsOptions), new AWS.S3(awsOptions));
 
     validateOptions();
 
@@ -402,6 +402,8 @@ module.exports = function (grunt) {
           return inPlaceDeploy(env);
         case 'swapToNew':
           return swapDeploy(env);
+        case 'manual':
+          return;
         default:
           grunt.warn('Deploy type "' + options.deployType + '" unrecognized');
       }
