@@ -163,6 +163,13 @@ module.exports = function (grunt) {
         options.healthPage = '/' + options.healthPage;
       }
 
+      if (!options.healthPageScheme) {
+        options.healthPageScheme = 'http';
+      } else if (options.healthPageScheme !== 'http' && options.healthPageScheme !== 'https') {
+        grunt.warn('"healthPageScheme" only accepts "http" or "https", reverting to "http"');
+        options.healthPageScheme = 'http';
+      }
+
       if (!options.versionLabel) {
         options.versionLabel = path.basename(options.sourceBundle,
             path.extname(options.sourceBundle));
@@ -326,24 +333,31 @@ module.exports = function (grunt) {
 
         var deferred = Q.defer();
 
-        get({
-              hostname: env.CNAME,
-              path: options.healthPage,
-              headers: {
-                'cache-control': 'no-cache'
-              }
-            },
-            function (res) {
-              if (res.statusCode === 200) {
-                grunt.log.ok();
-                deferred.resolve(res);
-              } else {
-                grunt.log.writeln('Status ' + res.statusCode);
-                deferred.resolve(
-                    Q.delay(options.healthPageIntervalSec * 1000)
-                        .then(checkHealthPage));
-              }
-            });
+        var checkHealthPageRequest = {
+          hostname: env.CNAME,
+          path: options.healthPage,
+          headers: {
+            'cache-control': 'no-cache'
+          }
+        };
+        var checkoutHealthPageCallback = function (res) {
+          if (res.statusCode === 200) {
+            grunt.log.ok();
+            deferred.resolve(res);
+          } else {
+            grunt.log.writeln('Status ' + res.statusCode);
+            deferred.resolve(
+              Q.delay(options.healthPageIntervalSec * 1000)
+               .then(checkHealthPage));
+          }
+        };
+        if (options.healthPageScheme === 'https') {
+          //Necessary because ELB's security certificate won't be valid yet.
+          checkHealthPageRequest.rejectUnauthorized = false;
+          sget(checkHealthPageRequest, checkoutHealthPageCallback);
+        } else {
+          get(checkHealthPageRequest, checkoutHealthPageCallback);
+        }
 
         return deferred.promise;
       }
