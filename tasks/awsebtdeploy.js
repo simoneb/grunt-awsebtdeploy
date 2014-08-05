@@ -38,7 +38,12 @@ module.exports = function (grunt) {
           'a unique environment name, maximum length ' +
           maxLength + ' characters');
 
-    return applicationName + timePart;
+    if (/^[a-zA-Z0-9\-]+$/.test(applicationName))
+      return applicationName + timePart;
+
+    grunt.log.subhead('Notice: application name contains invalid characters ' +
+        'for a environment name; stripping everything non letter, digit, or dash');
+    return applicationName.replace(/[^a-zA-Z0-9\-]+/g, "") + timePart;
   }
 
   function wrapAWS(eb, s3) {
