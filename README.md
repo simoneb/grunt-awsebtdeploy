@@ -136,6 +136,14 @@ A string or a regular expression to match against the body of any response retur
 Strings are matched with `===` whereas regular expressions 
 are matched with `RegExp.test`.
 
+##### options.healthPageScheme
+
+* Type: `String`
+* Default: `http`
+
+The URI scheme to use when loading the `options.healthPage`, accepts either `http` or `https`.  If `options.healthPage` is not set this option is ignored.   
+If set to `https`, the security certificate is ignored since the CNAME would not match the provided certificate.
+
 ##### options.deployTimeoutMin
 
 * Type: `Number` 
@@ -239,7 +247,7 @@ As an example, a failed deployment due to AWS issues may be automatically rolled
 
 Regardless of specific issues this is normally useful when doing a `swapToNew` deployment, whereby a change in the DNS might take time to propagate.
 
-A health check can be configured using two options: `options.healthPage` and `options.healthPageContents` and its behavior differs depending on the deployment type, described next.
+A health check can be configured using three options: `options.healthPage`, `options.healthPageContents` and `options.healthPageScheme`. Its behavior differs depending on the deployment type, described next.
 
 ## Deployment types
 
