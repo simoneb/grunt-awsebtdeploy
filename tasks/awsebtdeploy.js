@@ -481,8 +481,12 @@ module.exports = function (grunt) {
             var env = findEnvironmentByCNAME(data, options.environmentCNAME);
 
             if (!env) {
-              grunt.log.error();
-              grunt.warn('Environment with CNAME "' + options.environmentCNAME + '" does not exist');
+              if (options.deployType === 'manual') {
+                grunt.log.write('Environment with CNAME "' + options.environmentCNAME + '" does not exist but is not required for manual deployment');
+              } else {
+                grunt.log.error();
+                grunt.warn('Environment with CNAME "' + options.environmentCNAME + '" does not exist');
+              }
             }
 
             grunt.log.ok();
