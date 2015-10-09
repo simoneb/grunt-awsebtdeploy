@@ -26,6 +26,14 @@ module.exports = function (grunt) {
     })[0];
   }
 
+  function findEnvironmentByName(data, name) {
+    if (!data || !data.Environments) return false;
+
+    return data.Environments.filter(function (e) {
+      return e.EnvironmentName === name;
+    })[0];
+  }
+
   function createEnvironmentName(applicationName) {
     var maxLength      = 23,
         time           = new Date().getTime().toString(),
@@ -155,7 +163,7 @@ module.exports = function (grunt) {
 
     function validateOptions() {
       if (!options.applicationName) grunt.warn('Missing "applicationName"');
-      if (!options.environmentCNAME) grunt.warn('Missing "environmentCNAME"');
+      if (!options.environmentCNAME && !options.environmentName) grunt.warn('"environmentCNAME" or "environmentName" is required');
       if (!options.region) grunt.warn('Missing "region"');
       if (!options.sourceBundle) grunt.warn('Missing "sourceBundle"');
 
@@ -478,7 +486,10 @@ module.exports = function (grunt) {
       }).then(function (data) {
             grunt.verbose.writeflags(data, 'Environments');
 
-            var env = findEnvironmentByCNAME(data, options.environmentCNAME);
+            var env = options.environmentCNAME ? 
+              findEnvironmentByCNAME(data, options.environmentCNAME) :
+              findEnvironmentByName(data, options.environmentName)
+              ;
 
             if (!env) {
               if (options.deployType === 'manual') {
