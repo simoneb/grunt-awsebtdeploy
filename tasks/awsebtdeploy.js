@@ -98,20 +98,22 @@ module.exports = function (grunt) {
           function doRetrieve() {
             return Q.delay(options.intervalSec * 1000)
                 .then(function () {
-                  return retrieve(args);
+                    return retrieve(args);
                 })
                 .then(function (data) {
-                  var deferred = Q.defer(),
-                      found = data.EnvironmentInfo.filter(function (info) {
-                        return info.BatchId === requestId;
-                      });
-
+                  var deferred = Q.defer();
+                  var found;
+		  // Wait for logs to be retrieved and download the last one
+                  if (data.EnvironmentInfo && data.EnvironmentInfo.length > 0) {
+                      var eInfo = data.EnvironmentInfo;
+                      found = [data.EnvironmentInfo[data.EnvironmentInfo.length-1]];
+                  }
                   if (!found || !found.length) {
                     grunt.log.writeln('Still waiting for logs...');
                     deferred.resolve(doRetrieve());
                   } else {
                     deferred.resolve(Q.all(found.map(function (info) {
-                      var outputPath = path.join(options.outputPath, info.BatchId),
+                      var outputPath = options.outputPath,
                           batchDeferred = Q.defer();
 
                       sget(info.Message, function (res) {
@@ -122,7 +124,9 @@ module.exports = function (grunt) {
                         res.on('end', function () {
                           mkdirp.sync(outputPath);
 
-                          var fileName = path.join(outputPath, info.Name);
+                            var dt = new Date();
+                            var logFileName = dt.toString();
+                            var fileName = path.join(outputPath, logFileName);
                           grunt.log.writeln('Writing log file for EC2 instance ' +
                               info.Ec2InstanceId + ' to ' + fileName);
 
