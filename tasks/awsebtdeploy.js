@@ -26,6 +26,14 @@ module.exports = function (grunt) {
     })[0];
   }
 
+  function findEnvironmentByName(data, name) {
+    if (!data || !data.Environments) return false;
+
+    return data.Environments.filter(function (e) {
+      return e.EnvironmentName === name;
+    })[0];
+  }
+
   function createEnvironmentName(applicationName) {
     var maxLength      = 23,
         time           = new Date().getTime().toString(),
@@ -155,7 +163,7 @@ module.exports = function (grunt) {
 
     function validateOptions() {
       if (!options.applicationName) grunt.warn('Missing "applicationName"');
-      if (!options.environmentCNAME) grunt.warn('Missing "environmentCNAME"');
+      if (!options.environmentCNAME && !options.environmentName) grunt.warn('Missing "environmentCNAME" or "environmentName"');
       if (!options.region) grunt.warn('Missing "region"');
       if (!options.sourceBundle) grunt.warn('Missing "sourceBundle"');
 
@@ -475,7 +483,10 @@ module.exports = function (grunt) {
     }
 
     function checkEnvironmentExists() {
-      grunt.log.write('Checking that environment with CNAME "' + options.environmentCNAME + '" exists...');
+      if(options.environmentName)
+        grunt.log.write('Checking that environment with name "' + options.environmentName + '" exists...');
+      else
+        grunt.log.write('Checking that environment with CNAME "' + options.environmentCNAME + '" exists...');
 
       return qAWS.describeEnvironments({
         ApplicationName: options.applicationName,
@@ -483,14 +494,19 @@ module.exports = function (grunt) {
       }).then(function (data) {
             grunt.verbose.writeflags(data, 'Environments');
 
-            var env = findEnvironmentByCNAME(data, options.environmentCNAME);
+            var env = null;
+            if(options.environmentName)
+              env = findEnvironmentByName(data, options.environmentName);
+            else
+              env = findEnvironmentByCNAME(data, options.environmentCNAME);
 
             if (!env) {
+              var name = options.environmentName ? options.environmentName : options.environmentCNAME;
               if (options.deployType === 'manual') {
-                grunt.log.write('Environment with CNAME "' + options.environmentCNAME + '" does not exist but is not required for manual deployment');
+                grunt.log.write('Environment "' + name + '" does not exist but is not required for manual deployment');
               } else {
                 grunt.log.error();
-                grunt.warn('Environment with CNAME "' + options.environmentCNAME + '" does not exist');
+                grunt.warn('Environment "' + name + '" does not exist');
               }
             }
 

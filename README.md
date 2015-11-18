@@ -1,5 +1,5 @@
-# grunt-awsebtdeploy 
-[![Build Status](https://travis-ci.org/simoneb/grunt-awsebtdeploy.svg?branch=master)](https://travis-ci.org/simoneb/grunt-awsebtdeploy) 
+# grunt-awsebtdeploy
+[![Build Status](https://travis-ci.org/simoneb/grunt-awsebtdeploy.svg?branch=master)](https://travis-ci.org/simoneb/grunt-awsebtdeploy)
 [![NPM version](https://badge.fury.io/js/grunt-awsebtdeploy.svg)](http://badge.fury.io/js/grunt-awsebtdeploy)
 [![Dependency Status](https://david-dm.org/simoneb/grunt-awsebtdeploy.svg)](https://david-dm.org/simoneb/grunt-awsebtdeploy)
 
@@ -55,43 +55,54 @@ These are the supported options. A __*__ indicates a mandatory option.
 
 ##### options.applicationName *
 
-* Type: `String` 
+* Type: `String`
 
 The name of the Elastic Beanstalk application.  
 It must exist and be accessible with the provided AWS authorization tokens.
 
 ##### options.environmentCNAME *
 
-* Type: `String` 
+* Type: `String`
 
 The CNAME of the Elastic Beanstalk environment.  
 This is the host name of the url normally used to access the application, for example `myapp.elasticbeanstalk.com`.  
 It must exist and be accessible with the provided AWS authorization tokens.
 
+options.environmentCNAME is mandatory if options.environmentName not set
+
+##### options.environmentName *
+
+* Type: `String`
+
+The name of the Elastic Beanstalk environment.  
+It must exist and be accessible with the provided AWS authorization tokens.
+
+options.environmentName is mandatory if options.environmentCNAME not set
+
 ##### options.region *
 
-* Type: `String` 
+* Type: `String`
 
 The [AWS region](http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region), for example `us-east-1`.  
 This setting applies to all resources handled by the task, currently S3 and Elastic Beanstalk.
 
 ##### options.sourceBundle *
 
-* Type: `String` 
+* Type: `String`
 
-The path to a valid [source bundle](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.deployment.source.html) 
+The path to a valid [source bundle](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.deployment.source.html)
 archive on the local file system.  
 The archive needs to be created in advance of running the task, for instance with `git archive --format zip`.
 
 ##### options.deployType
 
-* Type: `String` 
+* Type: `String`
 * Default: `inPlace`  
 * Allowed values: `inPlace`, `swapToNew`, `manual`
 
 The type of the deployment to run, more on this below.
 
-##### options.versionLabel 
+##### options.versionLabel
 
 * Type: `String`
 * Default: `options.sourceBundle` file name without the extension
@@ -115,7 +126,7 @@ If not provided explicitly it is taken from the corresponding environment variab
 
 ##### options.secretAccessKey
 
-* Type: `String` 
+* Type: `String`
 * Default: `process.env.AWS_SECRET_ACCESS_KEY`
 
 The AWS secret access key.  
@@ -133,7 +144,7 @@ If not set the check is skipped.
 * Type: `String`, `RegExp`
 
 A string or a regular expression to match against the body of any response returned by `options.healthPage`.  If `options.healthPage` is not set this option is ignored.   
-Strings are matched with `===` whereas regular expressions 
+Strings are matched with `===` whereas regular expressions
 are matched with `RegExp.test`.
 
 ##### options.healthPageScheme
@@ -146,7 +157,7 @@ If set to `https`, the security certificate is ignored since the CNAME would not
 
 ##### options.deployTimeoutMin
 
-* Type: `Number` 
+* Type: `Number`
 * Default: `10`
 
 Number of minutes after which a deployment operation times out.  
@@ -155,14 +166,14 @@ of the application has been deployed.
 
 ##### options.deployIntervalSec
 
-* Type: `Number` 
+* Type: `Number`
 * Default: `20`
 
 Number of seconds between failed attempts to check the outcome of a deployment.
 
 ##### options.healthPageTimeoutMin
 
-* Type: `Number` 
+* Type: `Number`
 * Default: `5`
 
 Number of minutes after which checking the health page times out.  
@@ -170,7 +181,7 @@ This option is meaningful only in case `options.healthPage` is set.
 
 ##### options.healthPageIntervalSec
 
-* Type: `Number` 
+* Type: `Number`
 * Default: `10`
 
 Number of seconds between failed attempts to check the health page status and optionally its contents.
@@ -178,11 +189,11 @@ Number of seconds between failed attempts to check the health page status and op
 ##### options.s3
 
 * Type: `Object`
-* Default: 
+* Default:
 ```js
-{ 
+{
     bucket: options.applicationName,  
-    key: path.basename(options.sourceBundle) 
+    key: path.basename(options.sourceBundle)
 }
 ```
 
@@ -251,12 +262,12 @@ A health check can be configured using three options: `options.healthPage`, `opt
 
 ## Deployment types
 
-Three deployment types are supported, which can be configured in the task options. 
-There is a common sequence of internal operations followed by all deployment types, which correspond to 
+Three deployment types are supported, which can be configured in the task options.
+There is a common sequence of internal operations followed by all deployment types, which correspond to
 [AWS SDK operations](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/frames.html).
 
 1. `describeApplications` to check that `options.applicationName` exists
-2. `describeEnvironments` to check that `options.environmentCNAME` exists
+2. `describeEnvironments` to check that `options.environmentCNAME` or `options.environmentName` exists
 3. `S3.putObject` to upload `options.sourceBundle` to S3
 4. `createApplicationVersion` to create a new application version from the S3 object
 5. _any deployment type-specific logic, described below_
@@ -277,10 +288,10 @@ code is 200 and, if `options.healthPageContents` is set, until the body of the r
 
 ### `swapToNew`
 
-A flavor of *blue/green* deployment where a new environment is created with the same settings as the current one, 
-the application is deployed to the new environment and finally the CNAMEs of the environments are swapped 
-so that the old environment url now points to the new one. 
-This method enables zero-downtime deployments and the procedure 
+A flavor of *blue/green* deployment where a new environment is created with the same settings as the current one,
+the application is deployed to the new environment and finally the CNAMEs of the environments are swapped
+so that the old environment url now points to the new one.
+This method enables zero-downtime deployments and the procedure
 is described in the [AWS documentation](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.CNAMESwap.html).
 
 > The old environment is not terminated automatically for safety reasons, to avoid leaving old environments running
@@ -289,7 +300,7 @@ they should be terminated manually.
 
 The specific operations are:
 
-1. `createConfigurationTemplate` to create a template of the configuration of the current environment to be used for 
+1. `createConfigurationTemplate` to create a template of the configuration of the current environment to be used for
 the new environment. The template is given an autogenerated name
 2. `createEnvironment` to create a new environment based on the previous template, containing the new application version.
 The environment is given an autogenerated name
@@ -338,21 +349,21 @@ These are the supported options. A __*__ indicates a mandatory option.
 
 ##### options.environmentName *
 
-* Type: `String` 
+* Type: `String`
 
 The name of the Elastic Beanstalk environment.  
 It must exist and be accessible with the provided AWS authorization tokens.
 
 ##### options.outputPath *
 
-* Type: `String` 
+* Type: `String`
 
 The path on the file system where log files are saved.
 If the path does not exist it is created with `mkdirp`.
 
 ##### options.region *
 
-* Type: `String` 
+* Type: `String`
 
 The [AWS region](http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region), for example `us-east-1`.  
 
@@ -366,7 +377,7 @@ If not provided explicitly it is taken from the corresponding environment variab
 
 ##### options.secretAccessKey
 
-* Type: `String` 
+* Type: `String`
 * Default: `process.env.AWS_SECRET_ACCESS_KEY`
 
 The AWS secret access key.  
@@ -374,14 +385,14 @@ If not provided explicitly it is taken from the corresponding environment variab
 
 ##### options.timeoutSec
 
-* Type: `Number` 
+* Type: `Number`
 * Default: `30`
 
 Number of seconds after which the log retrieval operation times out.
 
 ##### options.intervalSec
 
-* Type: `Number` 
+* Type: `Number`
 * Default: `2`
 
 Number of seconds between attempts to check log availability.
@@ -409,7 +420,6 @@ grunt.initConfig({
 ```
 
 ## Release History
-
 * 2014-08-05	    v0.1.11	Support SSL-only ELB instances, ensure environment names contain legit characters
 * 2014-05-27	    v0.1.10	Add new "manual" deploy type
 * 2014-05-17	    v0.1.9	    Use options.versionDescription when creating an application version
